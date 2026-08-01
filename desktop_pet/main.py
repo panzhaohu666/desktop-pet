@@ -109,6 +109,16 @@ def _scan_skins() -> dict:
 
 
 def main() -> None:
+    import fcntl
+    lock_file = os.path.join(ConfigManager.config_dir(), "desktop_pet.lock")
+    os.makedirs(os.path.dirname(lock_file), exist_ok=True)
+    try:
+        lock_fd = open(lock_file, "w")
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (IOError, OSError):
+        print("桌宠精灵已在运行中")
+        sys.exit(0)
+
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     _setup_logging()

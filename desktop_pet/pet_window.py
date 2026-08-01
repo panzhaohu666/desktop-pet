@@ -201,15 +201,15 @@ class PetWindow(QWidget):
             self.x() + dx, self.y() + dy
         ))
 
+        self._anim_cancelled = False
         self._is_animating = True
-        anim = QPropertyAnimation(self, b"pos")
-        anim.setDuration(800 + random.randint(0, 400))
-        anim.setEasingCurve(QEasingCurve.InOutQuad)
-        anim.setStartValue(self.pos())
-        anim.setEndValue(target)
-        self._safe_anim_finished(anim, self._anim_done, 4000)
-        anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
-        anim.start()
+        self._wander_anim = QPropertyAnimation(self, b"pos")
+        self._wander_anim.setDuration(800 + random.randint(0, 400))
+        self._wander_anim.setEasingCurve(QEasingCurve.InOutQuad)
+        self._wander_anim.setStartValue(self.pos())
+        self._wander_anim.setEndValue(target)
+        self._safe_anim_finished(self._wander_anim, self._anim_done, 4000)
+        self._wander_anim.start()
         self.bubble.show_bubble(get_phrase("wander", self._get_skin_dir()), self.pos())
         sound.play_wander()
 
@@ -368,6 +368,11 @@ class PetWindow(QWidget):
                     child.stop()
                 except Exception:
                     pass
+        if hasattr(self, '_wander_anim') and self._wander_anim:
+            try:
+                self._wander_anim.stop()
+            except Exception:
+                pass
         for t in self._active_step_timers:
             try:
                 t.stop()
