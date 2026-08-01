@@ -482,7 +482,7 @@ class PetWindow(QWidget):
         orig = self.pos()
 
         def step(i: int):
-            offset = int(6 * __import__('math').sin(i * 0.8))
+            offset = int(6 * math.sin(i * 0.8))
             self.move(orig.x() + offset, orig.y())
 
         def done():
@@ -515,7 +515,7 @@ class PetWindow(QWidget):
 
         def step(i: int):
             progress = i / (len(angles) - 1)
-            y_offset = int(-30 * __import__('math').sin(progress * 3.14159))
+            y_offset = int(-30 * math.sin(progress * math.pi))
             self.move(orig.x(), orig.y() + y_offset)
             angle = angles[i]
             scaled = self.original_pixmap.scaled(

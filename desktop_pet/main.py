@@ -102,6 +102,10 @@ def main() -> None:
     app.setQuitOnLastWindowClosed(False)
     _setup_logging()
 
+    def _exception_hook(exc_type, exc_value, exc_tb):
+        logging.critical("未捕获异常", exc_info=(exc_type, exc_value, exc_tb))
+    sys.excepthook = _exception_hook
+
     major = Qt.__version_info__[1] if hasattr(Qt, '__version_info__') else 15
     if major < 14:
         app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
