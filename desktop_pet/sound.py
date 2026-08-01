@@ -6,7 +6,12 @@ import os
 import tempfile
 
 from PyQt5.QtCore import QUrl
-from PyQt5.QtMultimedia import QSoundEffect
+
+try:
+    from PyQt5.QtMultimedia import QSoundEffect
+    _HAS_MULTIMEDIA = True
+except ImportError:
+    _HAS_MULTIMEDIA = False
 
 from .config_manager import ConfigManager
 
@@ -69,6 +74,8 @@ def play_wander() -> None:
 _players = {}
 
 def _play(name: str) -> None:
+    if not _HAS_MULTIMEDIA:
+        return
     path = _SOUNDS.get(name)
     if not path or not os.path.exists(path):
         return
