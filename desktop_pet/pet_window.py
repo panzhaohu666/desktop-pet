@@ -204,7 +204,7 @@ class PetWindow(QWidget):
         anim.setEasingCurve(QEasingCurve.InOutQuad)
         anim.setStartValue(self.pos())
         anim.setEndValue(target)
-        anim.finished.connect(self._anim_done)
+        self._safe_anim_finished(anim, self._anim_done, 4000)
         anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
         anim.start()
         self.bubble.show_bubble(get_phrase("wander"), self.pos())
@@ -350,6 +350,14 @@ class PetWindow(QWidget):
     def _anim_done(self) -> None:
         self._is_animating = False
 
+    def _safe_anim_finished(self, anim, done_fn, max_ms: int = 3000) -> None:
+        """确保动画完成后调用 done_fn；超时强制兜底。"""
+        anim.finished.connect(done_fn)
+        guard = QTimer(self)
+        guard.setSingleShot(True)
+        guard.timeout.connect(lambda: (anim.stop(), done_fn()))
+        guard.start(max_ms)
+
     def _animate_move(self, target: QPoint, duration_ms: int) -> None:
         self._is_animating = True
         anim = QPropertyAnimation(self, b"pos")
@@ -357,8 +365,7 @@ class PetWindow(QWidget):
         anim.setEasingCurve(QEasingCurve.OutCubic)
         anim.setStartValue(self.pos())
         anim.setEndValue(target)
-        anim.finished.connect(self._anim_done)
-        anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
+        self._safe_anim_finished(anim, self._anim_done, 2000)
         anim.start()
 
     def _run_step_animation(self, step_fn: Callable[[int], None],
@@ -418,7 +425,7 @@ class PetWindow(QWidget):
         anim.setStartValue(orig)
         anim.setKeyValueAt(0.5, peak)
         anim.setEndValue(orig)
-        anim.finished.connect(self._anim_done)
+        self._safe_anim_finished(anim, self._anim_done, 2000)
         anim.start()
 
     def anim_squash(self) -> None:
