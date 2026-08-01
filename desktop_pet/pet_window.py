@@ -60,7 +60,6 @@ class PetWindow(QWidget):
         self.bubble = BubbleWidget(None)
 
         self._restore_position()
-        self._start_breathing()
         self._start_auto_wander()
 
     # ---- 默认图像 -----------------------------------------------------------
@@ -162,23 +161,6 @@ class PetWindow(QWidget):
             snap_y = scr.bottom() - self.height()
 
         return QPoint(snap_x, snap_y)
-
-    # ---- 呼吸动画 -----------------------------------------------------------
-
-    def _start_breathing(self) -> None:
-        self._breath_phase = 0.0
-        self._breath_timer = QTimer(self)
-        self._breath_timer.setInterval(100)  # 10fps — 足够平滑，不阻塞事件循环
-        self._breath_timer.timeout.connect(self._on_breath_tick)
-        self._breath_timer.start()
-
-    def _on_breath_tick(self) -> None:
-        if self._is_animating:
-            return
-        self._breath_phase += 0.21  # ≈ 每 3 秒一个完整周期
-        breath_scale = 1.0 + 0.015 * math.sin(self._breath_phase)
-        self._update_image_size(self.scale * breath_scale)
-
     # ---- 自动游走 -----------------------------------------------------------
 
     def _start_auto_wander(self) -> None:
