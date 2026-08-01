@@ -1,5 +1,16 @@
 # 更新日志
 
+## v1.0.8（2026-08-01）
+
+### 修复
+- **放置后点击无反应**：呼吸动画 `QVariantAnimation` 以 60fps 无限循环触发 `QPixmap.scaled()` + `setPixmap()`，事件循环被 paint 事件塞满，鼠标点击永远排不到
+- 呼吸动画改为 `QTimer` 100ms（10fps），事件压力降低 6 倍
+- 动画 timer 添加 `deleteLater()` 清理，消除百次交互后的 timer 泄漏
+- 所有 `QPropertyAnimation` 添加超时兜底（`_safe_anim_finished`），极端情况 `_is_animating` 不再永久卡死
+- 气泡高度改为 `QFontMetrics` 动态测量自适应，不再截断长文本
+
+---
+
 ## v1.0.7（2026-08-01）
 
 ### 修复
