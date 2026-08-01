@@ -16,13 +16,13 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact: DesktopPet-linux
+            artifact: DesktopPet-linux.zip
             display: Linux
           - os: windows-latest
-            artifact: DesktopPet-windows.exe
+            artifact: DesktopPet-windows.zip
             display: Windows
           - os: macos-latest
-            artifact: DesktopPet-macos
+            artifact: DesktopPet-macos.zip
             display: macOS
 
     steps:
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: DesktopPet-*
+          pattern: DesktopPet-*.zip
           merge-multiple: true
           path: dist
 
@@ -98,9 +98,9 @@ jobs:
 
           | 平台 | 文件 | 使用方式 |
           |------|------|----------|
-          | 🪟 Windows | `DesktopPet-windows.exe` | 双击运行 |
-          | 🐧 Linux | `DesktopPet-linux` | `chmod +x` 后运行 |
-          | 🍎 macOS | `DesktopPet-macos` | 右键 → 打开 |
+          | 🪟 Windows | `DesktopPet-windows.zip` | 解压后双击 `DesktopPet.exe` |
+          | 🐧 Linux | `DesktopPet-linux.zip` | 解压后运行 |
+          | 🍎 macOS | `DesktopPet-macos.zip` | 解压后运行 |
 
           ### 🎮 操作指南
 
@@ -131,7 +131,7 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/DesktopPet-*
+          files: dist/DesktopPet-*.zip
           body_path: release.md
           draft: false
           prerelease: false

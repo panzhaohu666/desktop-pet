@@ -18,9 +18,9 @@
 
 | 平台 | 文件 |
 |------|------|
-| 🪟 **Windows** | [下载 EXE](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-windows.exe) — 双击运行 |
-| 🐧 **Linux** | [下载 Linux 版](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-linux) — `chmod +x` 后运行 |
-| 🍎 **macOS** | [下载 macOS 版](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-macos) — 右键打开 |
+| 🪟 **Windows** | [下载 ZIP](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-windows.zip) — 解压后双击 `DesktopPet.exe` |
+| 🐧 **Linux** | [下载 ZIP](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-linux.zip) — 解压后运行 |
+| 🍎 **macOS** | [下载 ZIP](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-macos.zip) — 解压后运行 |
 
 > [查看所有版本 →](https://github.com/panzhaohu666/desktop-pet/releases)
 
