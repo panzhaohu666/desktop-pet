@@ -71,53 +71,52 @@ jobs:
       - name: List artifacts
         run: ls -lh dist/
 
-      - name: Generate release body
+      - name: 生成发布说明
         id: body
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
           cat > release.md << 'BODYEOF'
-          ## 🎉 Desktop Pet ${{ github.ref_name }}
+          ## 🎉 桌宠精灵 ${{ github.ref_name }}
 
-          Cross-platform desktop pet — transparent, frameless, always-on-top. Windows / Linux / macOS.
+          跨平台桌面宠物 — 透明无边框、始终置顶。支持 Windows / Linux / macOS。
 
-          ### ✨ Features
+          ### ✨ 功能特点
 
-          | Feature | Description |
-          |---------|-------------|
-          | 🪟 Transparent & Frameless | No background, no border, always-on-top |
-          | 🖱️ Drag to Move | Left-click drag, screen bounds clamping + edge snap |
-          | 🎬 9 Animations | Jump, squash, shake, tilt, wiggle, bounce, backflip, sneeze, rapid spin |
-          | 👆👆 Double-click Eggs | 6 single-click + 3 double-click exclusive animations |
-          | 🌬️ Idle Breathing | Continuous sinusoidal micro-motion — feels alive |
-          | 🚶 Auto-Wander | Randomly roams every 25~50 seconds |
-          | 🔍 Scroll Resize | 50% ~ 250% via mouse wheel |
-          | 💬 Speech Bubbles | 60+ Chinese phrases, pink bubbles for exciting moments |
-          | 📌 System Tray | Minimize to tray, click to show/hide, right-click to quit |
-          | 💾 Persistent Config | Remembers position, scale, always-on-top |
+          | 功能 | 说明 |
+          |------|------|
+          | 🪟 透明无边框 | 去除背景、无边框、始终置顶 |
+          | 🖱️ 拖拽移动 | 左键按住拖动，屏幕边界限制 + 边缘磁吸 |
+          | 🎬 9 种动画 | 跳跃、压扁、抖动、倾斜、扭动、弹跳、后空翻、喷嚏、旋转 |
+          | 👆👆 双击彩蛋 | 单击 6 种随机 + 双击 3 种隐藏动画 |
+          | 🌬️ 呼吸动画 | 闲置时持续正弦微动，仿佛在呼吸 |
+          | 🚶 自动游走 | 每 25~50 秒自动随机漫步 |
+          | 🔍 滚轮缩放 | 50%~250% 自由调节 |
+          | 💬 对话气泡 | 60+ 条中文短语，激动时变粉色气泡 |
+          | 📌 系统托盘 | 最小化到托盘，点击显示/隐藏 |
+          | 💾 配置记忆 | 自动记住位置、大小、置顶状态 |
 
-          ### 📥 Download
+          ### 📥 下载
 
-          | Platform | File | Usage |
-          |----------|------|-------|
-          | 🪟 Windows | `DesktopPet-windows.exe` | Double-click to run |
-          | 🐧 Linux | `DesktopPet-linux` | `chmod +x DesktopPet-linux && ./DesktopPet-linux` |
-          | 🍎 macOS | `DesktopPet-macos` | Right-click → Open (first time Gatekeeper bypass) |
+          | 平台 | 文件 | 使用方式 |
+          |------|------|----------|
+          | 🪟 Windows | `DesktopPet-windows.exe` | 双击运行 |
+          | 🐧 Linux | `DesktopPet-linux` | `chmod +x` 后运行 |
+          | 🍎 macOS | `DesktopPet-macos` | 右键 → 打开 |
 
-          ### 🎮 Controls
+          ### 🎮 操作指南
 
-          | Action | Trigger |
-          |--------|---------|
-          | Move | Left-click drag |
-          | Random (6 types) | Single click |
-          | Special (3 types) | Double click |
-          | Menu | Right-click |
-          | Resize | Mouse wheel |
+          | 操作 | 方式 |
+          |------|------|
+          | 移动 | 左键拖拽 |
+          | 随机互动（6 种） | 单击 |
+          | 特殊互动（3 种） | 双击 |
+          | 菜单 | 右键 |
+          | 缩放 | 鼠标滚轮 |
 
-          ### 🎨 Custom Character
+          ### 🎨 自定义角色
 
-          Replace `resources/pet.png` with your own transparent PNG.
+          替换 `resources/pet.png` 为你的透明 PNG 图片即可。
 
-          ### 🔧 Run from Source
+          ### 🔧 源码运行
 
           ```bash
           git clone https://github.com/panzhaohu666/desktop-pet.git
@@ -126,7 +125,7 @@ jobs:
           python run.py
           ```
 
-          **Full Changelog**: https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
+          **完整更新记录**: https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
           BODYEOF
 
       - name: Upload to Release

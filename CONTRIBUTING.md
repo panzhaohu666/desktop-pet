@@ -1,8 +1,8 @@
-# Contributing to Desktop Pet
+# 贡献指南
 
-Thanks for your interest in contributing! 🐾
+感谢你对桌宠精灵的关注！🐾
 
-## Getting Started
+## 快速开始
 
 ```bash
 git clone https://github.com/panzhaohu666/desktop-pet.git
@@ -11,55 +11,59 @@ pip install -r requirements.txt
 python run.py
 ```
 
-## Project Structure
+## 项目结构
 
-| File | Purpose |
-|------|---------|
-| `main.py` | Entry point, system tray, resource management |
-| `pet_window.py` | Core pet window — drag, animations, physics, menus |
-| `bubble_widget.py` | Speech bubble overlay |
-| `phrases.py` | Chinese phrase database |
-| `config_manager.py` | QSettings persistence |
-| `build_exe.py` | PyInstaller build script |
-| `run.py` | Convenience launcher |
+| 文件 | 用途 |
+|------|------|
+| `main.py` | 程序入口、系统托盘、资源管理 |
+| `pet_window.py` | 核心窗口 — 拖拽、动画、屏幕物理、菜单 |
+| `bubble_widget.py` | 对话气泡悬浮组件 |
+| `phrases.py` | 中文短语库 |
+| `config_manager.py` | QSettings 配置持久化 |
+| `build_exe.py` | PyInstaller 打包脚本 |
+| `run.py` | 便捷启动器 |
 
-## Code Style
+## 代码规范
 
-- Python 3.8+ compatible
-- Type hints on public methods (`-> None`, `-> str`, etc.)
-- Follow existing patterns in each file
-- No `as any` / `@ts-ignore` / bare `except:`
+- 兼容 Python 3.8+
+- 公开方法需添加类型标注（`-> None`、`-> str` 等）
+- 遵循已有代码风格
+- 禁止使用 `as any` / `@ts-ignore` / 裸 `except:`
 
-## Submitting Changes
+## 提交代码
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Make your changes
-4. Test: `python run.py` (ensure it starts without errors)
-5. Commit with a [conventional commit](https://www.conventionalcommits.org/) message:
-   - `feat:` — new feature
-   - `fix:` — bug fix
-   - `docs:` — documentation
-   - `refactor:` — code cleanup
-   - `ci:` — CI / build
-6. Push and open a Pull Request
+1. Fork 本仓库
+2. 创建功能分支：`git checkout -b feat/功能名`
+3. 修改代码
+4. 本地测试：`python run.py`（确保正常启动无报错）
+5. 提交时使用约定式提交格式：
+   - `feat:` — 新功能
+   - `fix:` — 修复 bug
+   - `docs:` — 文档修改
+   - `refactor:` — 代码重构
+   - `ci:` — CI / 构建相关
+6. Push 并创建 Pull Request
 
-## Adding Phrases
+## 添加短语
 
-Edit `phrases.py`. Add to the appropriate category or create a new one. Keep phrases short (< 30 chars) and family-friendly.
+编辑 `phrases.py`，加入合适的分类或新建分类。短语不宜过长（30 字以内），内容健康向上。
 
-## Adding Animations
+## 添加动画
 
-In `pet_window.py`, add a new `anim_xxx` method following the pattern:
+在 `pet_window.py` 中新增 `anim_xxx` 方法，参考现有动画模式：
+
 ```python
 def anim_xxx(self) -> None:
     self._is_animating = True
-    # ... animation logic ...
-    # call self._anim_done() when finished
+    # ... 动画逻辑 ...
+    # 完成后调用 self._anim_done()
 ```
 
-Then register it in `trigger_random_interaction()` or `_trigger_special_interaction()`.
+然后在 `trigger_random_interaction()` 或 `_trigger_special_interaction()` 中注册。
 
-## Reporting Issues
+## 反馈问题
 
-Use the [Bug Report](https://github.com/panzhaohu666/desktop-pet/issues/new?template=bug.yml) or [Feature Request](https://github.com/panzhaohu666/desktop-pet/issues/new?template=feature.yml) template.
+请使用对应模板提交：
+
+- [🐛 Bug 报告](https://github.com/panzhaohu666/desktop-pet/issues/new?template=bug.yml)
+- [✨ 功能建议](https://github.com/panzhaohu666/desktop-pet/issues/new?template=feature.yml)

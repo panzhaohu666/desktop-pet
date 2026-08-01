@@ -1,55 +1,55 @@
-# Changelog
+# 更新日志
 
-## v1.0.2 (2026-08-01)
+## v1.0.2（2026-08-01）
 
-### Added
-- Cross-platform CI/CD via GitHub Actions (Windows / Linux / macOS)
-- Pre-built binaries in release assets
-- Detailed release notes with feature table
-- Repository topics and metadata
+### 新增
+- GitHub Actions 跨平台自动构建（Windows / Linux / macOS）
+- Release 发布时自动附加三平台安装包
+- 详细版 Release 说明（功能列表 + 操作指南）
+- 仓库标签和元数据
 
-### Fixed
-- Windows CI build: removed non-ASCII chars from build script
+### 修复
+- Windows CI 构建失败：构建脚本中去除中文编码字符
 
 ---
 
 ## v1.0.1
 
-### Added
-- Idle breathing animation (sinusoidal micro-motion)
-- Auto-wander mode (random roaming every 25~50s)
-- Screen boundary clamping + edge snap
-- Double-click detection with 3 exclusive animations (backflip, sneeze, rapid spin)
-- 3 new single-click animations (wiggle, bounce, rapid spin)
-- Pink speech bubbles for exciting phrases
-- System tray integration
-- Context-aware phrases (double_click, wander, idle categories)
-- Expanded phrase library to 60+ entries
+### 新增
+- 闲置呼吸动画（正弦微动）
+- 自动游走模式（每 25~50 秒随机漫步）
+- 屏幕边界限制 + 边缘磁吸
+- 双击检测与 3 种专属动画（后空翻、喷嚏、快速旋转）
+- 3 种新单击动画（扭动、弹跳、快速旋转）
+- 激动内容粉色对话气泡
+- 系统托盘驻留
+- 上下文匹配短语（双击、游走、闲置分类）
+- 短语库扩充至 60+ 条
 
-### Fixed
-- Bubble parent window causing clipping — now independent top-level window
-- Python 3.8/3.9 compatibility (replaced `|` type syntax with `Optional`)
-- `setPen(QColor, width)` → `setPen(QPen(QColor, width))` for PyQt5 compatibility
-- `run.py` import path resolution
-- Missing `__init__.py` for package imports
-- `anim_squash` geometry overrun → pixmap transform approach
-- `AA_EnableHighDpiScaling` deprecation warning
-- `_fade_out` signal leak (repeated `connect`)
-- `ensure_pet_image` now works in PyInstaller frozen environment
-- Removed unused `Tuple` import
-- Fixed floating-point scale precision
+### 修复
+- 气泡父窗口导致裁剪 → 改为独立顶层窗口
+- Python 3.8/3.9 兼容（`|` 类型语法 → `Optional`）
+- `setPen` 参数兼容 PyQt5
+- `run.py` 导入路径解析
+- 缺失 `__init__.py` 包文件
+- 压扁动画几何越界 → pixmap 变换方案
+- `AA_EnableHighDpiScaling` 弃用警告
+- 淡出动画信号重复累积
+- PyInstaller 打包后资源路径兼容
+- 移除未使用导入
+- 修复浮点缩放精度
 
 ---
 
 ## v1.0.0
 
-### Initial Release
-- Transparent frameless always-on-top window
-- Drag to move
-- Scroll wheel resize (50%–250%)
-- 4 click animations: jump, squash, shake, spin-tilt
-- 35 Chinese phrases in speech bubbles
-- Right-click context menu (zoom, always-on-top, exit)
-- QSettings-based persistent configuration
-- PyInstaller packaging support
-- Default character sprite auto-generation
+### 首次发布
+- 透明无边框始终置顶窗口
+- 鼠标拖拽移动
+- 滚轮缩放（50%~250%）
+- 4 种单击动画：跳跃、压扁回弹、左右抖动、摇晃倾斜
+- 35 条中文短语对话气泡
+- 右键菜单（缩放、置顶、退出）
+- QSettings 配置持久化
+- PyInstaller 打包支持
+- 默认角色图片自动生成
