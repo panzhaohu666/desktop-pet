@@ -208,7 +208,7 @@ class PetWindow(QWidget):
         self._safe_anim_finished(anim, self._anim_done, 4000)
         anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
         anim.start()
-        self.bubble.show_bubble(get_phrase("wander"), self.pos())
+        self.bubble.show_bubble(get_phrase("wander", self._get_skin_dir()), self.pos())
         sound.play_wander()
 
         wander_secs = int(self.config_mgr.get("behavior/wander_interval", 35))
@@ -424,7 +424,7 @@ class PetWindow(QWidget):
             
         # 尝试播放序列帧动画
         if self._play_random_sprite_anim("click"):
-            self.bubble.show_bubble(get_random_phrase(), self.pos())
+            self.bubble.show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
             sound.play_click()
             return
             
@@ -434,7 +434,7 @@ class PetWindow(QWidget):
             self.anim_shake, self.anim_spin_tilt,
             self.anim_wiggle, self.anim_bounce,
         ])()
-        self.bubble.show_bubble(get_random_phrase(), self.pos())
+        self.bubble.show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
         sound.play_click()
 
     # ---- 双击特殊互动 -------------------------------------------------------
@@ -444,7 +444,7 @@ class PetWindow(QWidget):
             return
             
         if self._play_random_sprite_anim("double_click"):
-            self.bubble.show_bubble(get_phrase("double_click"), self.pos())
+            self.bubble.show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
             sound.play_special()
             return
 
@@ -452,7 +452,7 @@ class PetWindow(QWidget):
             self.anim_backflip, self.anim_sneeze,
             self.anim_rapid_spin,
         ])()
-        self.bubble.show_bubble(get_phrase("double_click"), self.pos())
+        self.bubble.show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
         sound.play_special()
 
     # ---- 序列帧动画支持 -----------------------------------------------------
@@ -676,7 +676,7 @@ class PetWindow(QWidget):
 
     def _on_idle_timeout(self) -> None:
         if not self._is_animating and not self.bubble.isVisible():
-            self.bubble.show_bubble(get_phrase("idle"), self.pos())
+            self.bubble.show_bubble(get_phrase("idle", self._get_skin_dir()), self.pos())
 
     # ---- 菜单操作 -----------------------------------------------------------
 

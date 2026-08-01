@@ -1,5 +1,7 @@
+import json
+import os
 import random
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 GENERAL: List[str] = [
     "你好呀~", "今天天气不错！", "嗨！想我了吗？",
@@ -44,11 +46,37 @@ CATEGORY_MAP: Dict[str, List[str]] = {
     "idle": IDLE,
 }
 
+_skin_phrases_cache: Dict[str, List[str]] = {}
 
-def get_random_phrase() -> str:
+
+def _load_skin_phrases(skin_dir: str) -> List[str]:
+    if skin_dir in _skin_phrases_cache:
+        return _skin_phrases_cache[skin_dir]
+    phrase_file = os.path.join(skin_dir, "phrases.json")
+    if os.path.exists(phrase_file):
+        try:
+            with open(phrase_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list) and data:
+                _skin_phrases_cache[skin_dir] = data
+                return data
+        except (json.JSONDecodeError, OSError):
+            pass
+    return []
+
+
+def get_random_phrase(skin_dir: str = "") -> str:
+    if skin_dir:
+        phrases = _load_skin_phrases(skin_dir)
+        if phrases:
+            return random.choice(phrases)
     return random.choice(GENERAL)
 
 
-def get_phrase(category: str) -> str:
+def get_phrase(category: str, skin_dir: str = "") -> str:
+    if skin_dir:
+        phrases = _load_skin_phrases(skin_dir)
+        if phrases:
+            return random.choice(phrases)
     pool = CATEGORY_MAP.get(category, GENERAL)
     return random.choice(pool)
