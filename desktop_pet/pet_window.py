@@ -32,7 +32,7 @@ class PetWindow(QWidget):
         self.base_size = 180
         self.scale = self.config_mgr.get_scale()
         self.always_on_top = self.config_mgr.get_always_on_top()
-        self._skin_key = self.config_mgr.get("appearance/skin", "default")
+        self._skin_key = self.config_mgr.get("appearance/skin", "")
 
         resolved = self._skins.get(self._skin_key, image_path)
         self.original_pixmap = QPixmap(resolved) if os.path.exists(resolved) else self._create_default_pixmap()
@@ -347,7 +347,7 @@ class PetWindow(QWidget):
             self.show()
             self.move(pos)
 
-        new_skin = self.config_mgr.get("appearance/skin", "default")
+        new_skin = self.config_mgr.get("appearance/skin", "")
         if new_skin != self._skin_key:
             self._switch_skin(new_skin)
 

@@ -78,7 +78,6 @@ class SettingsDialog(QDialog):
         g3 = QGroupBox("皮肤")
         f3 = QFormLayout()
         self._skin_combo = QComboBox()
-        self._skin_combo.addItem("默认", "default")
         for skin_name in self._skins:
             self._skin_combo.addItem(skin_name, skin_name)
         f3.addRow("当前皮肤", self._skin_combo)
@@ -134,7 +133,7 @@ class SettingsDialog(QDialog):
             sound_val = sound_val.lower() in ("true", "1", "yes")
         self._sound_cb.setChecked(bool(sound_val))
 
-        current_skin = self._cfg.get("appearance/skin", "default")
+        current_skin = self._cfg.get("appearance/skin", "")
         idx = self._skin_combo.findData(current_skin)
         if idx >= 0:
             self._skin_combo.setCurrentIndex(idx)
