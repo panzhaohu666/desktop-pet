@@ -43,6 +43,7 @@ class PetWindow(QWidget):
         self._drag_position = QPoint()
         self._drag_distance = 0
         self._is_animating = False
+        self._active_step_timers = []
 
         # 双击检测
         self._click_timer = QTimer(self)
@@ -366,6 +367,12 @@ class PetWindow(QWidget):
                     child.stop()
                 except Exception:
                     pass
+        for t in self._active_step_timers:
+            try:
+                t.stop()
+            except Exception:
+                pass
+        self._active_step_timers.clear()
         self._is_animating = False
 
     def _safe_anim_finished(self, anim, done_fn, max_ms: int = 3000) -> None:
@@ -392,12 +399,15 @@ class PetWindow(QWidget):
         counter = [0]
         timer = QTimer(self)
         timer.setInterval(interval_ms)
+        self._active_step_timers.append(timer)
 
         def _step():
             idx = counter[0]
             if idx >= total_steps:
                 timer.stop()
                 timer.deleteLater()
+                if timer in self._active_step_timers:
+                    self._active_step_timers.remove(timer)
                 done_fn()
                 return
             step_fn(idx)
