@@ -131,3 +131,12 @@ desktop_pet/
 ## 📄 License
 
 MIT © [panzhaohu666](https://github.com/panzhaohu666)
+
+---
+
+## 🤝 Community
+
+- [📋 Changelog](CHANGELOG.md) — version history
+- [🤝 Contributing](CONTRIBUTING.md) — how to contribute
+- [🐛 Bug Report](https://github.com/panzhaohu666/desktop-pet/issues/new?template=bug.yml)
+- [✨ Feature Request](https://github.com/panzhaohu666/desktop-pet/issues/new?template=feature.yml)

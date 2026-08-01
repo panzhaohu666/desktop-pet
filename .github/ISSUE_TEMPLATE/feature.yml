@@ -1,0 +1,32 @@
+name: ✨ Feature Request
+description: 建议一个新功能 / Suggest a new feature
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: 功能描述 / Feature Description
+      description: 你想要什么功能？What feature do you want?
+      placeholder: "描述你希望添加的功能..."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 使用场景 / Use Case
+      description: 为什么需要这个功能？Why is this feature needed?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 可能的实现方案 / Possible Solution
+      description: 有想法的话可以描述一下大致实现思路
+    validations:
+      required: false
+  - type: checkboxes
+    attributes:
+      label: 确认 / Confirmation
+      options:
+        - label: 我已经搜索过已有的 issues，没有重复
+          required: true
+        - label: 我愿意尝试自己实现并提交 PR
+          required: false

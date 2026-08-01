@@ -1,0 +1,45 @@
+name: 🐛 Bug Report
+description: 报告一个 bug / Report a bug
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: input
+    attributes:
+      label: 操作系统 / OS
+      placeholder: "例: Windows 11 / Ubuntu 22.04 / macOS 14"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Python 版本
+      placeholder: "例: Python 3.11.5"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 问题描述 / Description
+      description: 发生了什么？What happened?
+      placeholder: "详细描述 bug 的表现..."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 复现步骤 / Steps to Reproduce
+      placeholder: |
+        1. 运行程序
+        2. 执行 xx 操作
+        3. 看到错误
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 期望行为 / Expected Behavior
+      placeholder: "你期望发生什么？"
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: 截图或日志 / Screenshots or Logs
+      description: 如果有错误日志，请粘贴到这里
+    validations:
+      required: false
