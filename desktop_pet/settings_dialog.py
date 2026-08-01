@@ -104,7 +104,7 @@ class SettingsDialog(QDialog):
     def _update_skin_preview(self) -> None:
         skin = self._skin_combo.currentData()
         import os
-        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "skins", skin, "pet.png")
         if os.path.exists(path):
             pix = QPixmap(path).scaled(56, 56, Qt.KeepAspectRatio, Qt.SmoothTransformation)

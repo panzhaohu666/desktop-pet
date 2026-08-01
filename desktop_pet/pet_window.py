@@ -714,10 +714,16 @@ class PetWindow(QWidget):
     def closeEvent(self, event) -> None:
         event.ignore()
         self._stop_pos_animations()
-        self.idle_chat_timer.stop()
-        self.idle_yawn_timer.stop()
-        self._wander_timer.stop()
         self.hide()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        if not self.idle_chat_timer.isActive():
+            self.idle_chat_timer.start()
+        if not self.idle_yawn_timer.isActive():
+            self.idle_yawn_timer.start()
+        if not self._wander_timer.isActive():
+            self._wander_timer.start()
 
     def toggle_always_on_top(self) -> None:
         self.always_on_top = not self.always_on_top
@@ -731,5 +737,7 @@ class PetWindow(QWidget):
 
     def toggle_click_through(self, checked: bool) -> None:
         self.setAttribute(Qt.WA_TransparentForMouseEvents, checked)
+        self.hide()
+        self.show()
         self.bubble.show_bubble(
             "已开启穿透" if checked else "已关闭穿透", self.pos())
