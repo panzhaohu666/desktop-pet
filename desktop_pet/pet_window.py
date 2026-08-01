@@ -1,10 +1,10 @@
-import random
+import math
 import os
+import random
 from typing import Optional, Callable
 
 from PyQt5.QtCore import (
-    Qt, QTimer, QPoint, QPropertyAnimation, QEasingCurve,
-    QVariantAnimation, QRect,
+    Qt, QTimer, QPoint, QPropertyAnimation, QEasingCurve, QRect,
 )
 from PyQt5.QtGui import (
     QMouseEvent, QWheelEvent, QPixmap, QPainter, QTransform, QColor, QPen,
@@ -164,20 +164,18 @@ class PetWindow(QWidget):
     # ---- 呼吸动画 -----------------------------------------------------------
 
     def _start_breathing(self) -> None:
-        self._breath_anim = QVariantAnimation(self)
-        self._breath_anim.setDuration(3000)
-        self._breath_anim.setStartValue(0.0)
-        self._breath_anim.setEndValue(6.283)  # 2π
-        self._breath_anim.setLoopCount(-1)
-        self._breath_anim.setEasingCurve(QEasingCurve.Linear)
+        self._breath_phase = 0.0
+        self._breath_timer = QTimer(self)
+        self._breath_timer.setInterval(100)  # 10fps — 足够平滑，不阻塞事件循环
+        self._breath_timer.timeout.connect(self._on_breath_tick)
+        self._breath_timer.start()
 
-        def on_breath(value: float):
-            if not self._is_animating:
-                breath_scale = 1.0 + 0.015 * __import__('math').sin(value)
-                self._update_image_size(self.scale * breath_scale)
-
-        self._breath_anim.valueChanged.connect(on_breath)
-        self._breath_anim.start()
+    def _on_breath_tick(self) -> None:
+        if self._is_animating:
+            return
+        self._breath_phase += 0.21  # ≈ 每 3 秒一个完整周期
+        breath_scale = 1.0 + 0.015 * math.sin(self._breath_phase)
+        self._update_image_size(self.scale * breath_scale)
 
     # ---- 自动游走 -----------------------------------------------------------
 
@@ -353,11 +351,14 @@ class PetWindow(QWidget):
         self._is_animating = False
 
     def _animate_move(self, target: QPoint, duration_ms: int) -> None:
+        self._is_animating = True
         anim = QPropertyAnimation(self, b"pos")
         anim.setDuration(duration_ms)
         anim.setEasingCurve(QEasingCurve.OutCubic)
         anim.setStartValue(self.pos())
         anim.setEndValue(target)
+        anim.finished.connect(self._anim_done)
+        anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
         anim.start()
 
     def _run_step_animation(self, step_fn: Callable[[int], None],
@@ -371,6 +372,7 @@ class PetWindow(QWidget):
             idx = counter[0]
             if idx >= total_steps:
                 timer.stop()
+                timer.deleteLater()
                 done_fn()
                 return
             step_fn(idx)
