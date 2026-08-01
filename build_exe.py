@@ -22,6 +22,9 @@ def build() -> None:
     resources_src = os.path.join(current_dir, "resources")
     resources_arg = f"{resources_src}{separator}resources"
 
+    skins_src = os.path.join(current_dir, "skins")
+    skins_arg = f"{skins_src}{separator}skins" if os.path.isdir(skins_src) else ""
+
     binary_name = "DesktopPet.exe" if is_win else "DesktopPet"
 
     cmd = [
@@ -33,6 +36,8 @@ def build() -> None:
         f"--add-data={resources_arg}",
         "run.py",
     ]
+    if skins_arg:
+        cmd.insert(-1, f"--add-data={skins_arg}")
 
     print(f"Running PyInstaller...")
     subprocess.check_call(cmd, cwd=current_dir)

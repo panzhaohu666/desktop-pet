@@ -76,6 +76,16 @@ class ConfigManager:
         self.save_scale(scale)
         self.save_always_on_top(on_top)
 
+    # ---- 通用存取 ----------------------------------------------------------
+
+    def get(self, key: str, default=None):
+        """通用读取，支持带默认值。"""
+        return self._settings.value(key, default)
+
+    def set(self, key: str, value) -> None:
+        """通用写入。"""
+        self._settings.setValue(key, value)
+
     # ---- 工具 ------------------------------------------------------------
 
     @staticmethod

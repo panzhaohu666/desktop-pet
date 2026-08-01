@@ -1,4 +1,5 @@
 import random
+import os
 from typing import Optional, Callable
 
 from PyQt5.QtCore import (
@@ -15,21 +16,26 @@ from PyQt5.QtWidgets import (
 from .bubble_widget import BubbleWidget
 from .config_manager import ConfigManager
 from .phrases import get_random_phrase, get_phrase
+from . import sound
+from .settings_dialog import SettingsDialog
 
 
 class PetWindow(QWidget):
 
-    EDGE_SNAP_DISTANCE = 30  # 边缘磁吸距离 (px)
+    EDGE_SNAP_DISTANCE = 30
 
-    def __init__(self, image_path: str) -> None:
+    def __init__(self, image_path: str, skins: Optional[dict] = None) -> None:
         super().__init__()
         self.config_mgr = ConfigManager()
+        self._skins = skins or {}
 
         self.base_size = 180
         self.scale = self.config_mgr.get_scale()
         self.always_on_top = self.config_mgr.get_always_on_top()
+        self._skin_key = self.config_mgr.get("appearance/skin", "default")
 
-        self.original_pixmap = QPixmap(image_path)
+        resolved = self._skins.get(self._skin_key, image_path)
+        self.original_pixmap = QPixmap(resolved) if os.path.exists(resolved) else self._create_default_pixmap()
         if self.original_pixmap.isNull():
             self.original_pixmap = self._create_default_pixmap()
 
@@ -94,8 +100,9 @@ class PetWindow(QWidget):
         self._update_image_size()
 
     def _init_timers(self) -> None:
+        chat_secs = int(self.config_mgr.get("behavior/chat_interval", 20))
         self.idle_chat_timer = QTimer(self)
-        self.idle_chat_timer.setInterval(20000)
+        self.idle_chat_timer.setInterval(chat_secs * 1000)
         self.idle_chat_timer.timeout.connect(self._on_idle_timeout)
         self.idle_chat_timer.start()
 
@@ -174,8 +181,10 @@ class PetWindow(QWidget):
     # ---- 自动游走 -----------------------------------------------------------
 
     def _start_auto_wander(self) -> None:
+        wander_secs = int(self.config_mgr.get("behavior/wander_interval", 35))
+        interval = wander_secs * 1000
         self._wander_timer = QTimer(self)
-        self._wander_timer.setInterval(random.randint(25000, 50000))
+        self._wander_timer.setInterval(random.randint(interval - 5000, interval + 5000))
         self._wander_timer.timeout.connect(self._do_wander)
         self._wander_timer.start()
 
@@ -200,8 +209,11 @@ class PetWindow(QWidget):
         anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
         anim.start()
         self.bubble.show_bubble(get_phrase("wander"), self.pos())
+        sound.play_wander()
 
-        self._wander_timer.setInterval(random.randint(25000, 50000))
+        wander_secs = int(self.config_mgr.get("behavior/wander_interval", 35))
+        self._wander_timer.setInterval(random.randint(
+            (wander_secs - 5) * 1000, (wander_secs + 5) * 1000))
 
     # ---- 鼠标事件 -----------------------------------------------------------
 
@@ -275,15 +287,60 @@ class PetWindow(QWidget):
         menu.addAction("缩小 (-)").triggered.connect(self.zoom_out)
         menu.addAction("重置大小 (100%)").triggered.connect(self.reset_size)
         menu.addSeparator()
+
+        if len(self._skins) > 1:
+            skin_menu = menu.addMenu("切换皮肤")
+            for skin_name in self._skins:
+                act = skin_menu.addAction(f"  {skin_name}")
+                act.setCheckable(True)
+                act.setChecked(skin_name == self._skin_key)
+                act.triggered.connect(lambda checked, s=skin_name: self._switch_skin(s))
+
         menu.addAction(
             "取消置顶" if self.always_on_top else "始终置顶"
         ).triggered.connect(self.toggle_always_on_top)
         menu.addAction("手动游走").triggered.connect(self._do_wander)
         menu.addAction("陪我聊天").triggered.connect(self.trigger_random_interaction)
         menu.addSeparator()
+        menu.addAction("设置...").triggered.connect(self._open_settings)
         menu.addAction("最小化到托盘").triggered.connect(self.hide)
         menu.addAction("退出程序").triggered.connect(QApplication.quit)
         menu.exec_(event.globalPos())
+
+    def _switch_skin(self, skin_name: str) -> None:
+        if skin_name == self._skin_key:
+            return
+        resolved = self._skins.get(skin_name)
+        if resolved and os.path.exists(resolved):
+            self._skin_key = skin_name
+            self.original_pixmap = QPixmap(resolved)
+            self._update_image_size()
+            self.config_mgr.set("appearance/skin", skin_name)
+            self.bubble.show_bubble(f"已切换皮肤: {skin_name}", self.pos())
+
+    def _open_settings(self) -> None:
+        dlg = SettingsDialog(self, self.config_mgr, list(self._skins.keys()))
+        if dlg.exec_() == SettingsDialog.Accepted:
+            self._apply_settings()
+
+    def _apply_settings(self) -> None:
+        self.scale = self.config_mgr.get_scale()
+        self._update_image_size()
+
+        new_top = self.config_mgr.get_always_on_top()
+        if new_top != self.always_on_top:
+            self.always_on_top = new_top
+            pos = self.pos()
+            self._init_window_flags()
+            self.show()
+            self.move(pos)
+
+        new_skin = self.config_mgr.get("appearance/skin", "default")
+        if new_skin != self._skin_key:
+            self._switch_skin(new_skin)
+
+        chat_secs = int(self.config_mgr.get("behavior/chat_interval", 20))
+        self.idle_chat_timer.setInterval(chat_secs * 1000)
 
     # ---- 通用动画工具 -------------------------------------------------------
 
@@ -328,6 +385,7 @@ class PetWindow(QWidget):
             self.anim_wiggle, self.anim_bounce,
         ])()
         self.bubble.show_bubble(get_random_phrase(), self.pos())
+        sound.play_click()
 
     # ---- 双击特殊互动（3 种）------------------------------------------------
 
@@ -339,6 +397,7 @@ class PetWindow(QWidget):
             self.anim_rapid_spin,
         ])()
         self.bubble.show_bubble(get_phrase("double_click"), self.pos())
+        sound.play_special()
 
     # ---- 动画实现 -----------------------------------------------------------
 

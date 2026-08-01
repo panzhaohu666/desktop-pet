@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -5,6 +6,7 @@ from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QIcon, QPen
 from PyQt5.QtCore import Qt
 
+from desktop_pet.config_manager import ConfigManager
 from desktop_pet.pet_window import PetWindow
 
 
@@ -16,8 +18,22 @@ def _get_resource_dir() -> str:
     return os.path.join(base, "resources")
 
 
+def _setup_logging() -> None:
+    log_dir = ConfigManager.config_dir()
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "desktop_pet.log")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(log_file, encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+    )
+    logging.info("桌宠精灵启动")
+
+
 def _make_tray_icon() -> QIcon:
-    """生成一个 32x32 的托盘图标。"""
     pix = QPixmap(32, 32)
     pix.fill(Qt.transparent)
     p = QPainter(pix)
@@ -62,14 +78,29 @@ def ensure_pet_image() -> str:
     p.drawEllipse(135, 185, 30, 22)
     p.end()
     pix.save(pet_img_path, "PNG")
-    print(f"已自动生成默认宠物图片: {pet_img_path}")
-    print("提示：你可以随时将你喜欢的透明 PNG 图片替换到此路径！")
+    logging.info("已生成默认宠物图片: %s", pet_img_path)
     return pet_img_path
+
+
+def _scan_skins() -> dict:
+    """扫描 skins/ 目录，返回 {名称: pet.png路径} 的字典。"""
+    base = os.path.dirname(os.path.abspath(__file__))
+    skins_dir = os.path.join(base, "skins")
+    result = {}
+    if not os.path.isdir(skins_dir):
+        return result
+    for entry in sorted(os.listdir(skins_dir)):
+        skin_dir = os.path.join(skins_dir, entry)
+        pet_file = os.path.join(skin_dir, "pet.png")
+        if os.path.isdir(skin_dir) and os.path.isfile(pet_file):
+            result[entry] = pet_file
+    return result
 
 
 def main() -> None:
     app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)  # 关闭窗口不退出，驻留托盘
+    app.setQuitOnLastWindowClosed(False)
+    _setup_logging()
 
     major = Qt.__version_info__[1] if hasattr(Qt, '__version_info__') else 15
     if major < 14:
@@ -77,11 +108,13 @@ def main() -> None:
     app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     image_path = ensure_pet_image()
-    pet = PetWindow(image_path)
+    skins = _scan_skins()
+    logging.info("已加载 %d 套皮肤: %s", len(skins), list(skins.keys()))
 
-    # ---- 系统托盘 ----
+    pet = PetWindow(image_path, skins)
+
     tray = QSystemTrayIcon(_make_tray_icon(), app)
-    tray.setToolTip("桌面宠物 — 点击显示/隐藏")
+    tray.setToolTip("桌宠精灵 — 点击显示/隐藏")
 
     tray_menu = QMenu()
     show_action = QAction("显示/隐藏宠物")
@@ -99,8 +132,9 @@ def main() -> None:
 
     tray.activated.connect(on_tray_activated)
     tray.show()
-
     pet.show()
+
+    app.aboutToQuit.connect(lambda: logging.info("桌宠精灵退出"))
     sys.exit(app.exec_())
 
 
