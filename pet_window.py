@@ -1,0 +1,542 @@
+import random
+from typing import Optional, Callable
+
+from PyQt5.QtCore import (
+    Qt, QTimer, QPoint, QPropertyAnimation, QEasingCurve,
+    QVariantAnimation, QRect,
+)
+from PyQt5.QtGui import (
+    QMouseEvent, QWheelEvent, QPixmap, QPainter, QTransform, QColor, QPen,
+)
+from PyQt5.QtWidgets import (
+    QWidget, QLabel, QMenu, QApplication,
+)
+
+from .bubble_widget import BubbleWidget
+from .config_manager import ConfigManager
+from .phrases import get_random_phrase, get_phrase
+
+
+class PetWindow(QWidget):
+
+    EDGE_SNAP_DISTANCE = 30  # 边缘磁吸距离 (px)
+
+    def __init__(self, image_path: str) -> None:
+        super().__init__()
+        self.config_mgr = ConfigManager()
+
+        self.base_size = 180
+        self.scale = self.config_mgr.get_scale()
+        self.always_on_top = self.config_mgr.get_always_on_top()
+
+        self.original_pixmap = QPixmap(image_path)
+        if self.original_pixmap.isNull():
+            self.original_pixmap = self._create_default_pixmap()
+
+        self._is_dragging = False
+        self._drag_position = QPoint()
+        self._is_animating = False
+
+        # 双击检测
+        self._click_timer = QTimer(self)
+        self._click_timer.setSingleShot(True)
+        self._click_timer.setInterval(300)
+        self._click_timer.timeout.connect(self._on_single_click)
+        self._pending_click = False
+
+        self._init_window_flags()
+        self._init_ui()
+        self._init_timers()
+
+        self.bubble = BubbleWidget(None)
+
+        self._restore_position()
+        self._start_breathing()
+        self._start_auto_wander()
+
+    # ---- 默认图像 -----------------------------------------------------------
+
+    def _create_default_pixmap(self) -> QPixmap:
+        pix = QPixmap(200, 200)
+        pix.fill(Qt.transparent)
+        p = QPainter(pix)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QColor(255, 200, 50))
+        p.setPen(QPen(QColor(200, 140, 20), 3))
+        p.drawEllipse(30, 50, 140, 130)
+        p.setBrush(QColor(255, 120, 40))
+        p.drawEllipse(85, 20, 30, 35)
+        p.setBrush(QColor(80, 160, 60))
+        p.drawRect(82, 12, 6, 14)
+        p.setBrush(QColor(30, 30, 30))
+        p.drawEllipse(70, 90, 12, 18)
+        p.drawEllipse(118, 90, 12, 18)
+        p.setBrush(Qt.white)
+        p.drawEllipse(74, 94, 5, 7)
+        p.drawEllipse(122, 94, 5, 7)
+        p.setBrush(QColor(200, 60, 60))
+        p.drawEllipse(90, 145, 20, 15)
+        p.end()
+        return pix
+
+    # ---- 窗口初始化 ---------------------------------------------------------
+
+    def _init_window_flags(self) -> None:
+        flags = Qt.FramelessWindowHint | Qt.Tool
+        if self.always_on_top:
+            flags |= Qt.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+    def _init_ui(self) -> None:
+        self.label = QLabel(self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self._update_image_size()
+
+    def _init_timers(self) -> None:
+        self.idle_chat_timer = QTimer(self)
+        self.idle_chat_timer.setInterval(20000)
+        self.idle_chat_timer.timeout.connect(self._on_idle_timeout)
+        self.idle_chat_timer.start()
+
+    def _update_image_size(self, scale_override: Optional[float] = None) -> None:
+        s = scale_override if scale_override is not None else self.scale
+        current_dim = int(self.base_size * s)
+        self.setFixedSize(current_dim, current_dim)
+        self.label.setFixedSize(current_dim, current_dim)
+        self.label.move(0, 0)
+        scaled_pix = self.original_pixmap.scaled(
+            current_dim, current_dim,
+            Qt.KeepAspectRatio, Qt.SmoothTransformation,
+        )
+        self.label.setPixmap(scaled_pix)
+
+    def _restore_position(self) -> None:
+        saved_pos = self.config_mgr.get_position()
+        if saved_pos is not None:
+            self._clamp_to_screen(saved_pos)
+        else:
+            screen = QApplication.primaryScreen().geometry()
+            x = (screen.width() - self.width()) // 2
+            y = (screen.height() - self.height()) // 2
+            self.move(x, y)
+
+    # ---- 屏幕边界逻辑 -------------------------------------------------------
+
+    def _screen_geometry(self) -> QRect:
+        return QApplication.primaryScreen().availableGeometry()
+
+    def _clamp_to_screen(self, pos: QPoint) -> QPoint:
+        scr = self._screen_geometry()
+        x = max(scr.left(), min(pos.x(), scr.right() - self.width()))
+        y = max(scr.top(), min(pos.y(), scr.bottom() - self.height()))
+        return QPoint(x, y)
+
+    def _snap_to_edge(self, pos: QPoint) -> QPoint:
+        """如果宠物靠近屏幕边缘，吸附过去。"""
+        scr = self._screen_geometry()
+        cx = pos.x() + self.width() // 2
+        cy = pos.y() + self.height() // 2
+
+        snap_x = pos.x()
+        snap_y = pos.y()
+
+        if cx - scr.left() < self.EDGE_SNAP_DISTANCE:
+            snap_x = scr.left()
+        elif scr.right() - cx < self.EDGE_SNAP_DISTANCE:
+            snap_x = scr.right() - self.width()
+
+        if cy - scr.top() < self.EDGE_SNAP_DISTANCE:
+            snap_y = scr.top()
+        elif scr.bottom() - cy < self.EDGE_SNAP_DISTANCE:
+            snap_y = scr.bottom() - self.height()
+
+        return QPoint(snap_x, snap_y)
+
+    # ---- 呼吸动画 -----------------------------------------------------------
+
+    def _start_breathing(self) -> None:
+        self._breath_anim = QVariantAnimation(self)
+        self._breath_anim.setDuration(3000)
+        self._breath_anim.setStartValue(0.0)
+        self._breath_anim.setEndValue(6.283)  # 2π
+        self._breath_anim.setLoopCount(-1)
+        self._breath_anim.setEasingCurve(QEasingCurve.Linear)
+
+        def on_breath(value: float):
+            if not self._is_animating:
+                breath_scale = 1.0 + 0.015 * __import__('math').sin(value)
+                self._update_image_size(self.scale * breath_scale)
+
+        self._breath_anim.valueChanged.connect(on_breath)
+        self._breath_anim.start()
+
+    # ---- 自动游走 -----------------------------------------------------------
+
+    def _start_auto_wander(self) -> None:
+        self._wander_timer = QTimer(self)
+        self._wander_timer.setInterval(random.randint(25000, 50000))
+        self._wander_timer.timeout.connect(self._do_wander)
+        self._wander_timer.start()
+
+    def _do_wander(self) -> None:
+        if self._is_animating or self._is_dragging:
+            return
+        scr = self._screen_geometry()
+        margin = self.width()
+        dx = random.randint(-120, 120)
+        dy = random.randint(-80, 80)
+        target = self._clamp_to_screen(QPoint(
+            self.x() + dx, self.y() + dy
+        ))
+
+        self._is_animating = True
+        anim = QPropertyAnimation(self, b"pos")
+        anim.setDuration(800 + random.randint(0, 400))
+        anim.setEasingCurve(QEasingCurve.InOutQuad)
+        anim.setStartValue(self.pos())
+        anim.setEndValue(target)
+        anim.finished.connect(self._anim_done)
+        anim.finished.connect(lambda: self.config_mgr.save_position(self.pos()))
+        anim.start()
+        self.bubble.show_bubble(get_phrase("wander"), self.pos())
+
+        self._wander_timer.setInterval(random.randint(25000, 50000))
+
+    # ---- 鼠标事件 -----------------------------------------------------------
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self._is_dragging = True
+            self._drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if self._is_dragging and event.buttons() == Qt.LeftButton:
+            raw_pos = event.globalPos() - self._drag_position
+            self.move(self._clamp_to_screen(raw_pos))
+            self.bubble.refresh_position(self.pos())
+            event.accept()
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            if self._is_dragging:
+                self._is_dragging = False
+                snapped = self._snap_to_edge(self.pos())
+                if snapped != self.pos():
+                    self._animate_move(snapped, 150)
+                self.config_mgr.save_position(self.pos())
+            else:
+                # 双击检测
+                if self._click_timer.isActive():
+                    self._click_timer.stop()
+                    self._pending_click = False
+                    self._on_double_click()
+                else:
+                    self._pending_click = True
+                    self._click_timer.start()
+            event.accept()
+
+    def _on_single_click(self) -> None:
+        self._pending_click = False
+        self.trigger_random_interaction()
+
+    def _on_double_click(self) -> None:
+        self._trigger_special_interaction()
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.angleDelta().y()
+        old_scale = self.scale
+        self.scale = round(min(max(self.scale + (0.1 if delta > 0 else -0.1), 0.5), 2.5), 2)
+
+        if old_scale != self.scale:
+            center = self.geometry().center()
+            self._update_image_size()
+            new_rect = self.rect()
+            new_rect.moveCenter(center)
+            self.move(self._clamp_to_screen(new_rect.topLeft()))
+            self.config_mgr.save_scale(self.scale)
+            self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+        event.accept()
+
+    def contextMenuEvent(self, event) -> None:
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: white; border: 1px solid #d0d0d0;
+                border-radius: 6px; padding: 4px;
+                font-family: 'Microsoft YaHei'; font-size: 12px;
+            }
+            QMenu::item { padding: 6px 24px 6px 12px; border-radius: 4px; }
+            QMenu::item:selected { background-color: #4a90e2; color: white; }
+        """)
+
+        menu.addAction("放大 (+)").triggered.connect(self.zoom_in)
+        menu.addAction("缩小 (-)").triggered.connect(self.zoom_out)
+        menu.addAction("重置大小 (100%)").triggered.connect(self.reset_size)
+        menu.addSeparator()
+        menu.addAction(
+            "取消置顶" if self.always_on_top else "始终置顶"
+        ).triggered.connect(self.toggle_always_on_top)
+        menu.addAction("手动游走").triggered.connect(self._do_wander)
+        menu.addAction("陪我聊天").triggered.connect(self.trigger_random_interaction)
+        menu.addSeparator()
+        menu.addAction("最小化到托盘").triggered.connect(self.hide)
+        menu.addAction("退出程序").triggered.connect(QApplication.quit)
+        menu.exec_(event.globalPos())
+
+    # ---- 通用动画工具 -------------------------------------------------------
+
+    def _anim_done(self) -> None:
+        self._is_animating = False
+
+    def _animate_move(self, target: QPoint, duration_ms: int) -> None:
+        anim = QPropertyAnimation(self, b"pos")
+        anim.setDuration(duration_ms)
+        anim.setEasingCurve(QEasingCurve.OutCubic)
+        anim.setStartValue(self.pos())
+        anim.setEndValue(target)
+        anim.start()
+
+    def _run_step_animation(self, step_fn: Callable[[int], None],
+                            total_steps: int, interval_ms: int,
+                            done_fn: Callable[[], None]) -> None:
+        counter = [0]
+        timer = QTimer(self)
+        timer.setInterval(interval_ms)
+
+        def _step():
+            idx = counter[0]
+            if idx >= total_steps:
+                timer.stop()
+                done_fn()
+                return
+            step_fn(idx)
+            counter[0] += 1
+
+        timer.timeout.connect(_step)
+        timer.start()
+
+    # ---- 单击互动（随机 6 种）-----------------------------------------------
+
+    def trigger_random_interaction(self) -> None:
+        if self._is_animating:
+            return
+        random.choice([
+            self.anim_jump, self.anim_squash,
+            self.anim_shake, self.anim_spin_tilt,
+            self.anim_wiggle, self.anim_bounce,
+        ])()
+        self.bubble.show_bubble(get_random_phrase(), self.pos())
+
+    # ---- 双击特殊互动（3 种）------------------------------------------------
+
+    def _trigger_special_interaction(self) -> None:
+        if self._is_animating:
+            return
+        random.choice([
+            self.anim_backflip, self.anim_sneeze,
+            self.anim_rapid_spin,
+        ])()
+        self.bubble.show_bubble(get_phrase("double_click"), self.pos())
+
+    # ---- 动画实现 -----------------------------------------------------------
+
+    def anim_jump(self) -> None:
+        self._is_animating = True
+        orig = self.pos()
+        peak = QPoint(orig.x(), max(0, orig.y() - 50))
+        anim = QPropertyAnimation(self, b"pos")
+        anim.setDuration(420)
+        anim.setEasingCurve(QEasingCurve.OutQuad)
+        anim.setStartValue(orig)
+        anim.setKeyValueAt(0.5, peak)
+        anim.setEndValue(orig)
+        anim.finished.connect(self._anim_done)
+        anim.start()
+
+    def anim_squash(self) -> None:
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+
+        def step(progress: float):
+            t = progress * 2
+            if t <= 1.0:
+                sx, sy = 1.0 + t * 0.15, 1.0 - t * 0.15
+            else:
+                t -= 1.0
+                sx, sy = 1.15 - t * 0.15, 0.85 + t * 0.15
+            squashed = self.original_pixmap.transformed(
+                QTransform.fromScale(sx, sy), Qt.SmoothTransformation)
+            self.label.setPixmap(squashed.scaled(
+                dim, dim, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+        self._run_step_animation(
+            lambda i: step(i / 7.0), 8, 38, self._anim_done)
+
+    def anim_shake(self) -> None:
+        self._is_animating = True
+        orig = self.pos()
+
+        def step(i: int):
+            self.move(orig.x() + (8 if i % 2 == 0 else -8), orig.y())
+
+        def done():
+            self.move(orig)
+            self._is_animating = False
+
+        self._run_step_animation(step, 6, 45, done)
+
+    def anim_spin_tilt(self) -> None:
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+        angles = [0, 10, -10, 8, -8, 0]
+
+        def step(i: int):
+            angle = angles[i]
+            scaled = self.original_pixmap.scaled(
+                dim, dim, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            if angle != 0:
+                scaled = scaled.transformed(
+                    QTransform().rotate(angle), Qt.SmoothTransformation)
+            self.label.setPixmap(scaled)
+
+        self._run_step_animation(step, len(angles), 55, self._anim_done)
+
+    def anim_wiggle(self) -> None:
+        """左右扭动"""
+        self._is_animating = True
+        orig = self.pos()
+
+        def step(i: int):
+            offset = int(6 * __import__('math').sin(i * 0.8))
+            self.move(orig.x() + offset, orig.y())
+
+        def done():
+            self.move(orig)
+            self._is_animating = False
+
+        self._run_step_animation(step, 10, 50, done)
+
+    def anim_bounce(self) -> None:
+        """原地小跳"""
+        self._is_animating = True
+        orig = self.pos()
+        heights = [0, -20, 0, -12, 0, -6, 0]
+
+        def step(i: int):
+            self.move(orig.x(), orig.y() + heights[i])
+
+        def done():
+            self.move(orig)
+            self._is_animating = False
+
+        self._run_step_animation(step, len(heights), 80, done)
+
+    def anim_backflip(self) -> None:
+        """后空翻"""
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+        orig = self.pos()
+        angles = [0, 45, 90, 135, 180, 225, 270, 315, 360]
+
+        def step(i: int):
+            progress = i / (len(angles) - 1)
+            y_offset = int(-30 * __import__('math').sin(progress * 3.14159))
+            self.move(orig.x(), orig.y() + y_offset)
+            angle = angles[i]
+            scaled = self.original_pixmap.scaled(
+                dim, dim, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            if angle != 0:
+                scaled = scaled.transformed(
+                    QTransform().rotate(angle), Qt.SmoothTransformation)
+            self.label.setPixmap(scaled)
+
+        def done():
+            self.move(orig)
+            self._update_image_size()
+            self._is_animating = False
+
+        self._run_step_animation(step, len(angles), 50, done)
+
+    def anim_sneeze(self) -> None:
+        """喷嚏：抖动 + 缩成一团"""
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+        orig = self.pos()
+
+        def step(i: int):
+            if i < 4:
+                offset = 4 if i % 2 == 0 else -4
+                self.move(orig.x() + offset, orig.y())
+                self._update_image_size(self.scale)
+            elif i < 6:
+                self.move(orig.x(), orig.y())
+                self._update_image_size(self.scale * 0.8)
+            else:
+                self.move(orig.x(), orig.y())
+                self._update_image_size(self.scale * (0.8 + (i - 5) * 0.1))
+
+        def done():
+            self.move(orig)
+            self._update_image_size()
+            self._is_animating = False
+
+        self._run_step_animation(step, 8, 60, done)
+
+    def anim_rapid_spin(self) -> None:
+        """快速旋转"""
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+        orig = self.pos()
+
+        def step(i: int):
+            angle = i * 40
+            scaled = self.original_pixmap.scaled(
+                dim, dim, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            scaled = scaled.transformed(
+                QTransform().rotate(angle), Qt.SmoothTransformation)
+            self.label.setPixmap(scaled)
+
+        def done():
+            self.move(orig)
+            self._update_image_size()
+            self._is_animating = False
+
+        self._run_step_animation(step, 9, 35, done)
+
+    # ---- 闲置 ---------------------------------------------------------------
+
+    def _on_idle_timeout(self) -> None:
+        if not self._is_animating and not self.bubble.isVisible():
+            self.bubble.show_bubble(get_phrase("idle"), self.pos())
+
+    # ---- 菜单操作 -----------------------------------------------------------
+
+    def zoom_in(self) -> None:
+        self.scale = min(self.scale + 0.15, 2.5)
+        self._update_image_size()
+        self.config_mgr.save_scale(self.scale)
+        self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+
+    def zoom_out(self) -> None:
+        self.scale = max(self.scale - 0.15, 0.5)
+        self._update_image_size()
+        self.config_mgr.save_scale(self.scale)
+        self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+
+    def reset_size(self) -> None:
+        self.scale = 1.0
+        self._update_image_size()
+        self.config_mgr.save_scale(self.scale)
+        self.bubble.show_bubble("已恢复默认大小", self.pos())
+
+    def toggle_always_on_top(self) -> None:
+        self.always_on_top = not self.always_on_top
+        self.config_mgr.save_always_on_top(self.always_on_top)
+        pos = self.pos()
+        self._init_window_flags()
+        self.show()
+        self.move(pos)
+        self.bubble.show_bubble(
+            "已开启置顶" if self.always_on_top else "已取消置顶", self.pos())

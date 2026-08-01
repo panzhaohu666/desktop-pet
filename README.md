@@ -1,0 +1,111 @@
+# 🐾 Desktop Pet — 桌宠精灵
+
+A lightweight, transparent desktop companion for Windows & Linux, built with Python + PyQt5.
+
+<p align="center">
+  <img src="resources/pet.png" width="200" alt="Desktop Pet">
+</p>
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| **Transparent & Frameless** | No background, no border, always-on-top window |
+| **Drag to Move** | Left-click drag anywhere on screen |
+| **9 Animations** | Jump, squash, shake, tilt, wiggle, bounce, backflip, sneeze, rapid spin |
+| **Double-click Eggs** | 3 special double-click-exclusive animations |
+| **Idle Breathing** | Subtle sinusoidal breathing — feels alive |
+| **Auto-Wander** | Randomly roams the screen every 25~50 seconds |
+| **Screen Bounds** | Cannot be dragged off-screen; snaps to edges |
+| **Scroll Resize** | 50% ~ 250% via mouse wheel |
+| **Speech Bubbles** | 60+ Chinese phrases; pink bubbles for exciting moments |
+| **System Tray** | Minimize to tray, click to show/hide, right-click to quit |
+| **Persistent Config** | Remembers position, scale, always-on-top |
+| **Cross-Platform** | Identical features on Windows & Linux |
+
+---
+
+## 🎮 Controls
+
+| Action | Trigger |
+|--------|---------|
+| Move | Left-click & drag |
+| Random interaction (6 types) | Single click |
+| Special interaction (3 types) | Double click |
+| Context menu | Right-click |
+| Resize | Mouse scroll wheel |
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
+
+- Python 3.8+
+- PyQt5 >= 5.15
+- Pillow >= 8.0
+
+### Run
+
+```bash
+git clone https://github.com/panzhaohu666/desktop-pet.git
+cd desktop-pet
+pip install -r requirements.txt
+python run.py
+```
+
+### Custom Character
+
+Replace `resources/pet.png` with your own **transparent PNG** — anime, game mascot, or pet photo.
+
+---
+
+## 📦 Build EXE (Windows)
+
+Double-click `build.bat` or:
+
+```bash
+python build_exe.py
+```
+
+Output: `dist/DesktopPet.exe` — standalone, no Python required.
+
+---
+
+## 📁 Project Structure
+
+```
+desktop_pet/
+├── main.py             # Entry point + system tray + resource management
+├── pet_window.py       # Core: drag, 9 animations, screen physics, menus
+├── bubble_widget.py    # Speech bubble overlay (white / pink)
+├── phrases.py          # 60 Chinese phrases across 4 categories
+├── config_manager.py   # QSettings-based persistent configuration
+├── run.py              # Convenience launcher
+├── build_exe.py        # PyInstaller packaging script
+├── build.bat           # Windows one-click build
+├── requirements.txt    # Python dependencies
+├── LICENSE             # MIT License
+└── resources/
+    └── pet.png         # Character sprite (replaceable!)
+```
+
+---
+
+## 🎨 Customization
+
+| What | How |
+|------|-----|
+| **Character** | Replace `resources/pet.png` with any transparent PNG |
+| **Phrases** | Edit `phrases.py` |
+| **Animation speed** | Tune `duration` / `interval_ms` in `pet_window.py` |
+| **Wander frequency** | Adjust `wander_timer` interval |
+| **Edge snap** | Change `EDGE_SNAP_DISTANCE` constant |
+
+---
+
+## 📄 License
+
+MIT © [panzhaohu666](https://github.com/panzhaohu666)
