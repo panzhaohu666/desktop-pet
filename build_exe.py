@@ -22,6 +22,13 @@ def build() -> None:
         f"--name={binary_name}",
         f"--paths={current_dir}",
         f"--add-data={resources_src}{separator}resources",
+        "--exclude-module=PyQt5.QtWebEngine",
+        "--exclude-module=PyQt5.QtWebEngineCore",
+        "--exclude-module=PyQt5.QtWebChannel",
+        "--exclude-module=PyQt5.QtNetwork",
+        "--exclude-module=PyQt5.QtSql",
+        "--exclude-module=PyQt5.QtBluetooth",
+        "--exclude-module=PyQt5.QtSensors",
     ]
     if os.path.isdir(skins_src):
         cmd.append(f"--add-data={skins_src}{separator}skins")

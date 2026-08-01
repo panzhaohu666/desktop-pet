@@ -293,6 +293,10 @@ class PetWindow(QWidget):
         menu.addAction(
             "取消置顶" if self.always_on_top else "始终置顶"
         ).triggered.connect(self.toggle_always_on_top)
+        click_through_act = menu.addAction("点击穿透")
+        click_through_act.setCheckable(True)
+        click_through_act.setChecked(self.testAttribute(Qt.WA_TransparentForMouseEvents))
+        click_through_act.triggered.connect(self.toggle_click_through)
         menu.addAction("手动游走").triggered.connect(self._do_wander)
         menu.addAction("陪我聊天").triggered.connect(self.trigger_random_interaction)
         menu.addAction("关闭气泡").triggered.connect(self.bubble.hide)
@@ -707,6 +711,14 @@ class PetWindow(QWidget):
         self.config_mgr.save_scale(self.scale)
         self.bubble.show_bubble("已恢复默认大小", self.pos())
 
+    def closeEvent(self, event) -> None:
+        event.ignore()
+        self._stop_pos_animations()
+        self.idle_chat_timer.stop()
+        self.idle_yawn_timer.stop()
+        self._wander_timer.stop()
+        self.hide()
+
     def toggle_always_on_top(self) -> None:
         self.always_on_top = not self.always_on_top
         self.config_mgr.save_always_on_top(self.always_on_top)
@@ -716,3 +728,8 @@ class PetWindow(QWidget):
         self.move(pos)
         self.bubble.show_bubble(
             "已开启置顶" if self.always_on_top else "已取消置顶", self.pos())
+
+    def toggle_click_through(self, checked: bool) -> None:
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, checked)
+        self.bubble.show_bubble(
+            "已开启穿透" if checked else "已关闭穿透", self.pos())

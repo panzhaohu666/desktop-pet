@@ -2,6 +2,9 @@ import logging
 import os
 import sys
 
+os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
+os.environ.setdefault("QT_SCALE_FACTOR_ROUNDING_POLICY", "PassThrough")
+
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QIcon, QPen
 from PyQt5.QtCore import Qt, QPoint
