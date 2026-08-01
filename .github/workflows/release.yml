@@ -1,0 +1,80 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'          # 推送 v1.0.0 等标签时触发
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact: DesktopPet-linux
+            display: Linux
+          - os: windows-latest
+            artifact: DesktopPet-windows.exe
+            display: Windows
+          - os: macos-latest
+            artifact: DesktopPet-macos
+            display: macOS
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxcb-cursor0 libxcb-icccm4 \
+            libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-randr0 \
+            libegl1 libgl1 libopengl0
+
+      - name: Install Python deps
+        run: pip install pyinstaller PyQt5 pillow
+
+      - name: Build with PyInstaller
+        run: python build_exe.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: DesktopPet-*
+          merge-multiple: true
+          path: dist
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/DesktopPet-*
+          draft: false
+          prerelease: false
+          generate_release_notes: true

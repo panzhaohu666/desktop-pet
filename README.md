@@ -1,10 +1,32 @@
 # 🐾 Desktop Pet — 桌宠精灵
 
-A lightweight, transparent desktop companion for Windows & Linux, built with Python + PyQt5.
+A lightweight, transparent desktop companion for Windows, Linux & macOS, built with Python + PyQt5.
 
 <p align="center">
   <img src="resources/pet.png" width="200" alt="Desktop Pet">
 </p>
+
+<p align="center">
+  <a href="https://github.com/panzhaohu666/desktop-pet/releases"><img src="https://img.shields.io/github/v/release/panzhaohu666/desktop-pet?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/panzhaohu666/desktop-pet/blob/main/LICENSE"><img src="https://img.shields.io/github/license/panzhaohu666/desktop-pet?style=flat-square" alt="License"></a>
+  <a href="https://github.com/panzhaohu666/desktop-pet/actions"><img src="https://img.shields.io/github/actions/workflow/status/panzhaohu666/desktop-pet/release.yml?style=flat-square" alt="Build"></a>
+</p>
+
+---
+
+## 📥 Download (Pre-built)
+
+| Platform | Download |
+|----------|----------|
+| 🪟 **Windows** | [DesktopPet-windows.exe](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-windows.exe) |
+| 🐧 **Linux** | [DesktopPet-linux](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-linux) |
+| 🍎 **macOS** | [DesktopPet-macos](https://github.com/panzhaohu666/desktop-pet/releases/latest/download/DesktopPet-macos) |
+
+> **Windows**: Double-click the `.exe` to run.  
+> **Linux**: `chmod +x DesktopPet-linux && ./DesktopPet-linux`  
+> **macOS**: Right-click → Open (first time to bypass Gatekeeper).
+
+[All Releases →](https://github.com/panzhaohu666/desktop-pet/releases)
 
 ---
 
