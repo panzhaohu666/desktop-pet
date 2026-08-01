@@ -20,6 +20,7 @@ APP_NAME = "desktop_pet"
 DEFAULT_SIZE = 128
 DEFAULT_SCALE = 1.0
 DEFAULT_ALWAYS_ON_TOP = True
+CONFIG_VERSION = 2  # 配置结构版本号，升级时自动迁移
 
 
 class ConfigManager:
@@ -27,8 +28,15 @@ class ConfigManager:
 
     def __init__(self) -> None:
         self._settings = QSettings(ORG_NAME, APP_NAME)
+        self._migrate()
 
-    # ---- 读取 ------------------------------------------------------------
+    # ---- 读写 ------------------------------------------------------------
+
+    def _migrate(self) -> None:
+        """配置版本迁移。"""
+        stored = int(self._settings.value("config_version", 1))
+        if stored < CONFIG_VERSION:
+            self._settings.setValue("config_version", CONFIG_VERSION)
 
     def get_position(self) -> Optional[QPoint]:
         """读取保存的位置，如果从未保存过则返回 None。"""

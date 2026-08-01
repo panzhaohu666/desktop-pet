@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
     QLabel, QSlider, QCheckBox, QSpinBox, QPushButton, QComboBox,
     QGroupBox, QFormLayout, QDialogButtonBox,
 )
+from PyQt5.QtGui import QPixmap
 
 from .config_manager import ConfigManager
 
@@ -36,7 +37,12 @@ class SettingsDialog(QDialog):
         tabs.addTab(self._behavior_tab(), "行为")
         layout.addWidget(tabs)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox()
+        reset_btn = QPushButton("恢复默认设置")
+        reset_btn.clicked.connect(self._reset_defaults)
+        buttons.addButton(reset_btn, QDialogButtonBox.ResetRole)
+        ok_btn = buttons.addButton(QDialogButtonBox.Ok)
+        cancel_btn = buttons.addButton(QDialogButtonBox.Cancel)
         buttons.accepted.connect(self._save_and_accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -80,12 +86,31 @@ class SettingsDialog(QDialog):
         self._skin_combo = QComboBox()
         for skin_name in self._skins:
             self._skin_combo.addItem(skin_name, skin_name)
-        f3.addRow("当前皮肤", self._skin_combo)
+        self._skin_preview = QLabel()
+        self._skin_preview.setFixedSize(64, 64)
+        self._skin_preview.setStyleSheet("border: 1px solid #ddd; border-radius: 6px; background: white;")
+        self._skin_preview.setAlignment(Qt.AlignCenter)
+        self._skin_combo.currentIndexChanged.connect(self._update_skin_preview)
+        row = QHBoxLayout()
+        row.addWidget(self._skin_combo, 1)
+        row.addWidget(self._skin_preview)
+        f3.addRow("当前皮肤", row)
         g3.setLayout(f3)
         layout.addWidget(g3)
 
         layout.addStretch()
         return w
+
+    def _update_skin_preview(self) -> None:
+        skin = self._skin_combo.currentData()
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "skins", skin, "pet.png")
+        if os.path.exists(path):
+            pix = QPixmap(path).scaled(56, 56, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        else:
+            pix = QPixmap(56, 56); pix.fill(Qt.lightGray)
+        self._skin_preview.setPixmap(pix)
 
     # ---- 行为页 -------------------------------------------------------------
 
@@ -150,3 +175,10 @@ class SettingsDialog(QDialog):
     @property
     def selected_skin(self) -> str:
         return self._skin_combo.currentData()
+
+    def _reset_defaults(self) -> None:
+        self._scale_slider.setValue(100)
+        self._top_cb.setChecked(True)
+        self._wander_spin.setValue(35)
+        self._chat_spin.setValue(20)
+        self._sound_cb.setChecked(True)

@@ -108,6 +108,11 @@ class PetWindow(QWidget):
         self.idle_chat_timer.timeout.connect(self._on_idle_timeout)
         self.idle_chat_timer.start()
 
+        self.idle_yawn_timer = QTimer(self)
+        self.idle_yawn_timer.setInterval(45000)  # 45秒闲置 → 打哈欠
+        self.idle_yawn_timer.timeout.connect(self._on_idle_yawn)
+        self.idle_yawn_timer.start()
+
     def _update_image_size(self, scale_override: Optional[float] = None) -> None:
         s = scale_override if scale_override is not None else self.scale
         current_dim = int(self.base_size * s)
@@ -290,6 +295,7 @@ class PetWindow(QWidget):
         ).triggered.connect(self.toggle_always_on_top)
         menu.addAction("手动游走").triggered.connect(self._do_wander)
         menu.addAction("陪我聊天").triggered.connect(self.trigger_random_interaction)
+        menu.addAction("关闭气泡").triggered.connect(self.bubble.hide)
         menu.addSeparator()
         menu.addAction("设置...").triggered.connect(self._open_settings)
         menu.addAction("最小化到托盘").triggered.connect(self.hide)
@@ -671,6 +677,15 @@ class PetWindow(QWidget):
     def _on_idle_timeout(self) -> None:
         if not self._is_animating and not self.bubble.isVisible():
             self.bubble.show_bubble(get_phrase("idle", self._get_skin_dir()), self.pos())
+
+    def _on_idle_yawn(self) -> None:
+        if self._is_animating or self._is_dragging:
+            return
+        skin_dir = self._get_skin_dir()
+        idle_dir = os.path.join(skin_dir, "idle") if skin_dir else ""
+        if idle_dir and os.path.isdir(idle_dir):
+            self._play_sprite_sequence(idle_dir)
+            self.idle_yawn_timer.setInterval(random.randint(40000, 80000))
 
     # ---- 菜单操作 -----------------------------------------------------------
 
