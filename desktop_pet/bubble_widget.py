@@ -6,15 +6,15 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import (
     QPainter, QPainterPath, QPen, QBrush, QColor, QFont,
 )
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QApplication
 
 
-BUBBLE_WIDTH = 200
-BUBBLE_HEIGHT = 52
+BUBBLE_WIDTH = 240
+BUBBLE_HEIGHT = 56
 ARROW_HEIGHT = 10
 ARROW_WIDTH = 16
 BORDER_RADIUS = 12
-PADDING_H = 16
+PADDING_H = 14
 FONT_SIZE = 13
 
 # 普通气泡颜色
@@ -82,6 +82,12 @@ class BubbleWidget(QWidget):
         self._choose_colors(text)
         x = target_pos.x() - (BUBBLE_WIDTH // 4)
         y = target_pos.y() - BUBBLE_HEIGHT - ARROW_HEIGHT - 4
+
+        if QApplication.primaryScreen():
+            scr = QApplication.primaryScreen().availableGeometry()
+            x = max(0, min(x, scr.right() - BUBBLE_WIDTH))
+            y = max(0, y)
+
         self.move(x, y)
 
         self._show_anim.stop()
@@ -96,6 +102,9 @@ class BubbleWidget(QWidget):
             return
         x = target_pos.x() - (BUBBLE_WIDTH // 4)
         y = target_pos.y() - BUBBLE_HEIGHT - ARROW_HEIGHT - 4
+        if QApplication.primaryScreen():
+            scr = QApplication.primaryScreen().availableGeometry()
+            x = max(0, min(x, scr.right() - BUBBLE_WIDTH))
         self.move(x, y)
 
     def _fade_out(self) -> None:

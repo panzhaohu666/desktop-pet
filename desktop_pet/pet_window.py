@@ -41,6 +41,7 @@ class PetWindow(QWidget):
 
         self._is_dragging = False
         self._drag_position = QPoint()
+        self._drag_distance = 0
         self._is_animating = False
 
         # 双击检测
@@ -121,7 +122,7 @@ class PetWindow(QWidget):
     def _restore_position(self) -> None:
         saved_pos = self.config_mgr.get_position()
         if saved_pos is not None:
-            self._clamp_to_screen(saved_pos)
+            self.move(self._clamp_to_screen(saved_pos))
         else:
             screen = QApplication.primaryScreen().geometry()
             x = (screen.width() - self.width()) // 2
@@ -220,33 +221,37 @@ class PetWindow(QWidget):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
             self._is_dragging = True
+            self._drag_distance = 0
             self._drag_position = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self._is_dragging and event.buttons() == Qt.LeftButton:
-            raw_pos = event.globalPos() - self._drag_position
-            self.move(self._clamp_to_screen(raw_pos))
+            new_pos = event.globalPos() - self._drag_position
+            dx = abs(new_pos.x() - self.x())
+            dy = abs(new_pos.y() - self.y())
+            self._drag_distance += dx + dy
+            self.move(self._clamp_to_screen(new_pos))
             self.bubble.refresh_position(self.pos())
             event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
-            if self._is_dragging:
-                self._is_dragging = False
+            was_drag = self._is_dragging and self._drag_distance > 8
+            self._is_dragging = False
+
+            if was_drag:
                 snapped = self._snap_to_edge(self.pos())
                 if snapped != self.pos():
                     self._animate_move(snapped, 150)
                 self.config_mgr.save_position(self.pos())
+            elif self._click_timer.isActive():
+                self._click_timer.stop()
+                self._pending_click = False
+                self._on_double_click()
             else:
-                # 双击检测
-                if self._click_timer.isActive():
-                    self._click_timer.stop()
-                    self._pending_click = False
-                    self._on_double_click()
-                else:
-                    self._pending_click = True
-                    self._click_timer.start()
+                self._pending_click = True
+                self._click_timer.start()
             event.accept()
 
     def _on_single_click(self) -> None:
