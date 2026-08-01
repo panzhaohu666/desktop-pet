@@ -75,62 +75,16 @@ jobs:
       - name: List artifacts
         run: ls -lh dist/
 
-      - name: 提取当前版本更新日志
-        id: changelog
-        run: |
-          VERSION="${{ github.ref_name }}"
-          # 去掉 v 前缀用于匹配 CHANGELOG
-          CLEAN_VER="${VERSION#v}"
-          
-          # 从 CHANGELOG.md 提取当前版本的变更内容
-          python3 << 'PYEOF'
-          import re, sys
-
-          with open("CHANGELOG.md", "r", encoding="utf-8") as f:
-              content = f.read()
-
-          version = sys.argv[1] if len(sys.argv) > 1 else ""
-          # 匹配 "## vX.Y.Z" 或 "## vX.Y.Z（日期）"
-          pattern = rf"(## v{re.escape(version)}[^\n]*\n.*?)(?=\n## v|\Z)"
-          match = re.search(pattern, content, re.DOTALL)
-
-          if match:
-              with open("changelog_section.md", "w", encoding="utf-8") as out:
-                  out.write(match.group(1).strip())
-              print(f"CHANGELOG_SECTION extracted for v{version}")
-          else:
-              print(f"WARNING: no CHANGELOG entry found for v{version}")
-              with open("changelog_section.md", "w", encoding="utf-8") as out:
-                  out.write("")
-          PYEOF $CLEAN_VER
-
-      - name: 检查是否有更新日志
-        id: has_changelog
-        run: |
-          if [ -s changelog_section.md ]; then
-            echo "HAS_LOG=true" >> $GITHUB_OUTPUT
-          else
-            echo "HAS_LOG=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: 生成完整发布说明（有更新日志）
-        if: steps.has_changelog.outputs.HAS_LOG == 'true'
+      - name: 生成发布说明
         run: |
           cat > release.md << 'BODYEOF'
           ## 🎉 桌宠精灵 ${{ github.ref_name }}
 
           跨平台桌面宠物 — 透明无边框、始终置顶。Windows / Linux / macOS。
 
-          ---
+          ### 📋 更新内容
 
-          ### 📋 本次更新内容
-          BODYEOF
-          
-          cat changelog_section.md >> release.md
-          
-          cat >> release.md << 'BODYEOF'
-
-          ---
+          详见 [CHANGELOG.md](https://github.com/panzhaohu666/desktop-pet/blob/main/CHANGELOG.md)
 
           ### 📥 下载
 
@@ -150,26 +104,16 @@ jobs:
           | 菜单 | 右键 |
           | 缩放 | 鼠标滚轮 |
 
-          **完整更新记录**: https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
-          BODYEOF
+          ### 🔧 源码运行
 
-      - name: 生成完整发布说明（无更新日志）
-        if: steps.has_changelog.outputs.HAS_LOG == 'false'
-        run: |
-          cat > release.md << 'BODYEOF'
-          ## 🎉 桌宠精灵 ${{ github.ref_name }}
+          ```bash
+          git clone https://github.com/panzhaohu666/desktop-pet.git
+          cd desktop-pet
+          pip install -r requirements.txt
+          python run.py
+          ```
 
-          跨平台桌面宠物 — 透明无边框、始终置顶。Windows / Linux / macOS。
-
-          ### 📥 下载
-
-          | 平台 | 文件 | 使用方式 |
-          |------|------|----------|
-          | 🪟 Windows | `DesktopPet-windows.zip` | 解压后双击 `DesktopPet.exe` |
-          | 🐧 Linux | `DesktopPet-linux.zip` | 解压后运行 |
-          | 🍎 macOS | `DesktopPet-macos.zip` | 解压后运行 |
-
-          **完整更新记录**: https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
+          完整更新记录：https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
           BODYEOF
 
       - name: Upload to Release
