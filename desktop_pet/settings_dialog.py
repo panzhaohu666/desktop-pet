@@ -129,7 +129,10 @@ class SettingsDialog(QDialog):
         self._top_cb.setChecked(self._cfg.get_always_on_top())
         self._wander_spin.setValue(int(self._cfg.get("behavior/wander_interval", 35)))
         self._chat_spin.setValue(int(self._cfg.get("behavior/chat_interval", 20)))
-        self._sound_cb.setChecked(self._cfg.get("sound/enabled", True))
+        sound_val = self._cfg.get("sound/enabled", True)
+        if isinstance(sound_val, str):
+            sound_val = sound_val.lower() in ("true", "1", "yes")
+        self._sound_cb.setChecked(bool(sound_val))
 
         current_skin = self._cfg.get("appearance/skin", "default")
         idx = self._skin_combo.findData(current_skin)
