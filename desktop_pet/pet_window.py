@@ -322,6 +322,13 @@ class PetWindow(QWidget):
             self.config_mgr.set("appearance/skin", skin_name)
             self.bubble.show_bubble(f"已切换皮肤: {skin_name}", self.pos())
 
+    def _get_skin_dir(self) -> str:
+        """获取当前皮肤所在的文件夹路径"""
+        resolved = self._skins.get(self._skin_key)
+        if resolved and os.path.exists(resolved):
+            return os.path.dirname(resolved)
+        return ""
+
     def _open_settings(self) -> None:
         dlg = SettingsDialog(self, self.config_mgr, list(self._skins.keys()))
         if dlg.exec_() == SettingsDialog.Accepted:
@@ -399,11 +406,19 @@ class PetWindow(QWidget):
         timer.timeout.connect(_step)
         timer.start()
 
-    # ---- 单击互动（随机 6 种）-----------------------------------------------
+    # ---- 单击互动（随机）----------------------------------------------------
 
     def trigger_random_interaction(self) -> None:
         if self._is_animating:
             return
+            
+        # 尝试播放序列帧动画
+        if self._play_random_sprite_anim("click"):
+            self.bubble.show_bubble(get_random_phrase(), self.pos())
+            sound.play_click()
+            return
+            
+        # 如果没有序列帧，降级到代码动画
         random.choice([
             self.anim_jump, self.anim_squash,
             self.anim_shake, self.anim_spin_tilt,
@@ -412,17 +427,75 @@ class PetWindow(QWidget):
         self.bubble.show_bubble(get_random_phrase(), self.pos())
         sound.play_click()
 
-    # ---- 双击特殊互动（3 种）------------------------------------------------
+    # ---- 双击特殊互动 -------------------------------------------------------
 
     def _trigger_special_interaction(self) -> None:
         if self._is_animating:
             return
+            
+        if self._play_random_sprite_anim("double_click"):
+            self.bubble.show_bubble(get_phrase("double_click"), self.pos())
+            sound.play_special()
+            return
+
         random.choice([
             self.anim_backflip, self.anim_sneeze,
             self.anim_rapid_spin,
         ])()
         self.bubble.show_bubble(get_phrase("double_click"), self.pos())
         sound.play_special()
+
+    # ---- 序列帧动画支持 -----------------------------------------------------
+
+    def _play_random_sprite_anim(self, category: str) -> bool:
+        """尝试在当前皮肤下寻找对应分类的序列帧并播放。找到返回True，否则返回False。"""
+        skin_dir = self._get_skin_dir()
+        if not skin_dir:
+            return False
+            
+        category_dir = os.path.join(skin_dir, category)
+        if not os.path.isdir(category_dir):
+            return False
+            
+        # 找该分类下的所有动作文件夹（例如 skins/default/click/jump/）
+        actions = [d for d in os.listdir(category_dir) 
+                  if os.path.isdir(os.path.join(category_dir, d))]
+        
+        if not actions:
+            # 如果没有子文件夹，直接把当前目录当成一个动作帧序列
+            return self._play_sprite_sequence(category_dir)
+            
+        # 随机挑一个动作
+        chosen_action = random.choice(actions)
+        return self._play_sprite_sequence(os.path.join(category_dir, chosen_action))
+
+    def _play_sprite_sequence(self, seq_dir: str) -> bool:
+        """播放指定目录下的序列帧 PNG"""
+        frames = []
+        for f in sorted(os.listdir(seq_dir)):
+            if f.lower().endswith('.png'):
+                frames.append(os.path.join(seq_dir, f))
+                
+        if not frames:
+            return False
+            
+        self._is_animating = True
+        dim = int(self.base_size * self.scale)
+        
+        def step(i: int):
+            frame_path = frames[i]
+            pix = QPixmap(frame_path)
+            if not pix.isNull():
+                scaled = pix.scaled(dim, dim, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.label.setPixmap(scaled)
+                
+        def done():
+            self._update_image_size()  # 恢复默认图片
+            self._is_animating = False
+            
+        # 假设 15fps (约 66ms 一帧)
+        self._run_step_animation(step, len(frames), 66, done)
+        return True
 
     # ---- 动画实现 -----------------------------------------------------------
 
