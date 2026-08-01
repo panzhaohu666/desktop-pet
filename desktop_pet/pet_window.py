@@ -45,6 +45,7 @@ class PetWindow(QWidget):
         self._is_animating = False
         self._active_step_timers = []
         self._anim_cancelled = False
+        self._bubbles_enabled = True
 
         # 双击检测
         self._click_timer = QTimer(self)
@@ -197,7 +198,7 @@ class PetWindow(QWidget):
         self._wander_anim.setEndValue(target)
         self._safe_anim_finished(self._wander_anim, self._anim_done, 4000)
         self._wander_anim.start()
-        self.bubble.show_bubble(get_phrase("wander", self._get_skin_dir()), self.pos())
+        self._show_bubble(get_phrase("wander", self._get_skin_dir()), self.pos())
         sound.play_wander()
 
         wander_secs = int(self.config_mgr.get("behavior/wander_interval", 35))
@@ -262,7 +263,7 @@ class PetWindow(QWidget):
             new_rect.moveCenter(center)
             self.move(self._clamp_to_screen(new_rect.topLeft()))
             self.config_mgr.save_scale(self.scale)
-            self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+            self._show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
         event.accept()
 
     def contextMenuEvent(self, event) -> None:
@@ -299,7 +300,7 @@ class PetWindow(QWidget):
         click_through_act.triggered.connect(self.toggle_click_through)
         menu.addAction("手动游走").triggered.connect(self._do_wander)
         menu.addAction("陪我聊天").triggered.connect(self.trigger_random_interaction)
-        menu.addAction("关闭气泡").triggered.connect(self.bubble.hide)
+        menu.addAction("关闭气泡").triggered.connect(self._toggle_bubbles)
         menu.addSeparator()
         menu.addAction("设置...").triggered.connect(self._open_settings)
         menu.addAction("最小化到托盘").triggered.connect(self.hide)
@@ -315,7 +316,7 @@ class PetWindow(QWidget):
             self.original_pixmap = QPixmap(resolved)
             self._update_image_size()
             self.config_mgr.set("appearance/skin", skin_name)
-            self.bubble.show_bubble(f"已切换皮肤: {skin_name}", self.pos())
+            self._show_bubble(f"已切换皮肤: {skin_name}", self.pos())
 
     def _get_skin_dir(self) -> str:
         """获取当前皮肤所在的文件夹路径"""
@@ -427,7 +428,7 @@ class PetWindow(QWidget):
             
         # 尝试播放序列帧动画
         if self._play_random_sprite_anim("click"):
-            self.bubble.show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
+            self._show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
             sound.play_click()
             return
             
@@ -437,7 +438,7 @@ class PetWindow(QWidget):
             self.anim_shake, self.anim_spin_tilt,
             self.anim_wiggle, self.anim_bounce,
         ])()
-        self.bubble.show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
+        self._show_bubble(get_random_phrase(self._get_skin_dir()), self.pos())
         sound.play_click()
 
     # ---- 双击特殊互动 -------------------------------------------------------
@@ -448,7 +449,7 @@ class PetWindow(QWidget):
         self._anim_cancelled = False
             
         if self._play_random_sprite_anim("double_click"):
-            self.bubble.show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
+            self._show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
             sound.play_special()
             return
 
@@ -456,7 +457,7 @@ class PetWindow(QWidget):
             self.anim_backflip, self.anim_sneeze,
             self.anim_rapid_spin,
         ])()
-        self.bubble.show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
+        self._show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
         sound.play_special()
 
     # ---- 序列帧动画支持 -----------------------------------------------------
@@ -680,7 +681,7 @@ class PetWindow(QWidget):
 
     def _on_idle_timeout(self) -> None:
         if not self._is_animating and not self.bubble.isVisible():
-            self.bubble.show_bubble(get_phrase("idle", self._get_skin_dir()), self.pos())
+            self._show_bubble(get_phrase("idle", self._get_skin_dir()), self.pos())
 
     def _on_idle_yawn(self) -> None:
         if self._is_animating or self._is_dragging:
@@ -694,22 +695,22 @@ class PetWindow(QWidget):
     # ---- 菜单操作 -----------------------------------------------------------
 
     def zoom_in(self) -> None:
-        self.scale = min(self.scale + 0.15, 2.5)
+        self.scale = round(min(self.scale + 0.15, 2.5), 2)
         self._update_image_size()
         self.config_mgr.save_scale(self.scale)
-        self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+        self._show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
 
     def zoom_out(self) -> None:
-        self.scale = max(self.scale - 0.15, 0.5)
+        self.scale = round(max(self.scale - 0.15, 0.5), 2)
         self._update_image_size()
         self.config_mgr.save_scale(self.scale)
-        self.bubble.show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
+        self._show_bubble(f"大小: {int(self.scale * 100)}%", self.pos())
 
     def reset_size(self) -> None:
         self.scale = 1.0
         self._update_image_size()
         self.config_mgr.save_scale(self.scale)
-        self.bubble.show_bubble("已恢复默认大小", self.pos())
+        self._show_bubble("已恢复默认大小", self.pos())
 
     def closeEvent(self, event) -> None:
         event.ignore()
@@ -732,12 +733,23 @@ class PetWindow(QWidget):
         self._init_window_flags()
         self.show()
         self.move(pos)
-        self.bubble.show_bubble(
+        self._show_bubble(
             "已开启置顶" if self.always_on_top else "已取消置顶", self.pos())
 
     def toggle_click_through(self, checked: bool) -> None:
         self.setAttribute(Qt.WA_TransparentForMouseEvents, checked)
         self.hide()
         self.show()
-        self.bubble.show_bubble(
+        self._show_bubble(
             "已开启穿透" if checked else "已关闭穿透", self.pos())
+
+    def _show_bubble(self, text: str, pos) -> None:
+        if self._bubbles_enabled:
+            self.bubble.show_bubble(text, pos)
+
+    def _toggle_bubbles(self) -> None:
+        self._bubbles_enabled = not self._bubbles_enabled
+        if not self._bubbles_enabled:
+            self.bubble.hide()
+        self._show_bubble(
+            "气泡已开启" if self._bubbles_enabled else "气泡已关闭", self.pos())
