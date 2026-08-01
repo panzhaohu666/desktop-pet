@@ -71,10 +71,68 @@ jobs:
       - name: List artifacts
         run: ls -lh dist/
 
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          cat > release.md << 'BODYEOF'
+          ## 🎉 Desktop Pet ${{ github.ref_name }}
+
+          Cross-platform desktop pet — transparent, frameless, always-on-top. Windows / Linux / macOS.
+
+          ### ✨ Features
+
+          | Feature | Description |
+          |---------|-------------|
+          | 🪟 Transparent & Frameless | No background, no border, always-on-top |
+          | 🖱️ Drag to Move | Left-click drag, screen bounds clamping + edge snap |
+          | 🎬 9 Animations | Jump, squash, shake, tilt, wiggle, bounce, backflip, sneeze, rapid spin |
+          | 👆👆 Double-click Eggs | 6 single-click + 3 double-click exclusive animations |
+          | 🌬️ Idle Breathing | Continuous sinusoidal micro-motion — feels alive |
+          | 🚶 Auto-Wander | Randomly roams every 25~50 seconds |
+          | 🔍 Scroll Resize | 50% ~ 250% via mouse wheel |
+          | 💬 Speech Bubbles | 60+ Chinese phrases, pink bubbles for exciting moments |
+          | 📌 System Tray | Minimize to tray, click to show/hide, right-click to quit |
+          | 💾 Persistent Config | Remembers position, scale, always-on-top |
+
+          ### 📥 Download
+
+          | Platform | File | Usage |
+          |----------|------|-------|
+          | 🪟 Windows | `DesktopPet-windows.exe` | Double-click to run |
+          | 🐧 Linux | `DesktopPet-linux` | `chmod +x DesktopPet-linux && ./DesktopPet-linux` |
+          | 🍎 macOS | `DesktopPet-macos` | Right-click → Open (first time Gatekeeper bypass) |
+
+          ### 🎮 Controls
+
+          | Action | Trigger |
+          |--------|---------|
+          | Move | Left-click drag |
+          | Random (6 types) | Single click |
+          | Special (3 types) | Double click |
+          | Menu | Right-click |
+          | Resize | Mouse wheel |
+
+          ### 🎨 Custom Character
+
+          Replace `resources/pet.png` with your own transparent PNG.
+
+          ### 🔧 Run from Source
+
+          ```bash
+          git clone https://github.com/panzhaohu666/desktop-pet.git
+          cd desktop-pet
+          pip install -r requirements.txt
+          python run.py
+          ```
+
+          **Full Changelog**: https://github.com/panzhaohu666/desktop-pet/commits/${{ github.ref_name }}
+          BODYEOF
+
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/DesktopPet-*
+          body_path: release.md
           draft: false
           prerelease: false
-          generate_release_notes: true
