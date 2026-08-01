@@ -15,13 +15,15 @@ python run.py
 
 | 文件 | 用途 |
 |------|------|
-| `main.py` | 程序入口、系统托盘、资源管理 |
-| `pet_window.py` | 核心窗口 — 拖拽、动画、屏幕物理、菜单 |
-| `bubble_widget.py` | 对话气泡悬浮组件 |
-| `phrases.py` | 中文短语库 |
-| `config_manager.py` | QSettings 配置持久化 |
+| `run.py` | 启动脚本（仓库根目录） |
 | `build_exe.py` | PyInstaller 打包脚本 |
-| `run.py` | 便捷启动器 |
+| `desktop_pet/main.py` | 程序入口、系统托盘、日志 |
+| `desktop_pet/pet_window.py` | 核心窗口 — 拖拽、动画、屏幕物理、菜单 |
+| `desktop_pet/bubble_widget.py` | 对话气泡悬浮组件 |
+| `desktop_pet/phrases.py` | 中文短语库 |
+| `desktop_pet/config_manager.py` | QSettings 配置持久化 |
+| `desktop_pet/settings_dialog.py` | 图形化设置面板 |
+| `desktop_pet/sound.py` | 音效模块 |
 
 ## 代码规范
 

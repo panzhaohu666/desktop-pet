@@ -3,7 +3,7 @@
 轻量级桌面宠物程序，支持 Windows、Linux、macOS。透明无边框、始终置顶。基于 Python + PyQt5 构建。
 
 <p align="center">
-  <img src="resources/pet.png" width="200" alt="桌宠精灵">
+  <img src="desktop_pet/resources/pet.png" width="200" alt="桌宠精灵">
 </p>
 
 <p align="center">
@@ -77,8 +77,8 @@ python run.py
 
 ### 自定义角色与皮肤
 
-- **单角色**：将透明 PNG 重命名为 `pet.png` 替换 `resources/pet.png`
-- **多皮肤**：在 `skins/` 目录下创建子文件夹（如 `skins/猫猫/pet.png`），右键菜单即可一键切换
+- **单角色**：将透明 PNG 重命名为 `pet.png` 替换 `desktop_pet/resources/pet.png`
+- **多皮肤**：在 `desktop_pet/skins/` 目录下创建子文件夹（如 `desktop_pet/skins/猫猫/pet.png`），右键菜单即可一键切换
 
 ### 图形化设置
 
@@ -99,19 +99,25 @@ python build_exe.py
 ## 📁 项目结构
 
 ```
-desktop_pet/
-├── main.py              # 程序入口 + 系统托盘 + 资源管理
-├── pet_window.py        # 核心：拖拽、9 种动画、屏幕物理、右键菜单
-├── bubble_widget.py     # 对话气泡组件（白色 / 粉色）
-├── phrases.py           # 60 条中文短语库（4 个分类）
-├── config_manager.py    # QSettings 配置持久化
-├── run.py               # 便捷启动脚本
+desktop-pet/
+├── run.py               # 启动脚本
 ├── build_exe.py         # PyInstaller 打包脚本
-├── build.bat            # Windows 一键打包批处理
+├── build.bat            # Windows 一键打包
 ├── requirements.txt     # 依赖列表
-├── LICENSE              # MIT 开源协议
-└── resources/
-    └── pet.png          # 角色图片（可替换）
+├── LICENSE              # MIT 协议
+└── desktop_pet/         # Python 包
+    ├── main.py          # 程序入口 + 托盘 + 日志
+    ├── pet_window.py    # 核心窗口（拖拽/动画/物理/菜单）
+    ├── bubble_widget.py # 对话气泡组件
+    ├── phrases.py       # 60 条中文短语库
+    ├── config_manager.py# 配置持久化
+    ├── settings_dialog.py# 图形化设置面板
+    ├── sound.py         # 音效模块
+    ├── resources/
+    │   └── pet.png      # 角色图片（可替换）
+    └── skins/
+        └── default/
+            └── pet.png  # 默认皮肤
 ```
 
 ---
@@ -120,7 +126,7 @@ desktop_pet/
 
 | 项目 | 方法 |
 |------|------|
-| **角色** | 替换 `resources/pet.png` |
+| **角色** | 替换 `desktop_pet/resources/pet.png` |
 | **短语** | 编辑 `phrases.py` |
 | **动画速度** | 调整 `pet_window.py` 中的 `duration` / `interval_ms` |
 | **游走频率** | 调整 `wander_timer` 间隔 |
