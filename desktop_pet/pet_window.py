@@ -221,6 +221,7 @@ class PetWindow(QWidget):
             self._is_dragging = True
             self._drag_distance = 0
             self._drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            self._stop_pos_animations()
             event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -348,6 +349,16 @@ class PetWindow(QWidget):
     # ---- 通用动画工具 -------------------------------------------------------
 
     def _anim_done(self) -> None:
+        self._is_animating = False
+
+    def _stop_pos_animations(self) -> None:
+        """停止所有正在运行的位移动画（用户拖拽时调用）。"""
+        for child in self.children():
+            if isinstance(child, QPropertyAnimation):
+                try:
+                    child.stop()
+                except Exception:
+                    pass
         self._is_animating = False
 
     def _safe_anim_finished(self, anim, done_fn, max_ms: int = 3000) -> None:
