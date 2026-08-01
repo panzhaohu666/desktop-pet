@@ -44,6 +44,7 @@ class PetWindow(QWidget):
         self._drag_distance = 0
         self._is_animating = False
         self._active_step_timers = []
+        self._anim_cancelled = False
 
         # 双击检测
         self._click_timer = QTimer(self)
@@ -191,6 +192,7 @@ class PetWindow(QWidget):
     def _do_wander(self) -> None:
         if self._is_animating or self._is_dragging:
             return
+        self._anim_cancelled = False
         scr = self._screen_geometry()
         margin = self.width()
         dx = random.randint(-120, 120)
@@ -360,7 +362,6 @@ class PetWindow(QWidget):
         self._is_animating = False
 
     def _stop_pos_animations(self) -> None:
-        """停止所有正在运行的位移动画（用户拖拽时调用）。"""
         for child in self.children():
             if isinstance(child, QPropertyAnimation):
                 try:
@@ -373,14 +374,18 @@ class PetWindow(QWidget):
             except Exception:
                 pass
         self._active_step_timers.clear()
+        self._anim_cancelled = True
         self._is_animating = False
+        self._update_image_size()
 
     def _safe_anim_finished(self, anim, done_fn, max_ms: int = 3000) -> None:
-        """确保动画完成后调用 done_fn；超时强制兜底。"""
         anim.finished.connect(done_fn)
         guard = QTimer(self)
         guard.setSingleShot(True)
-        guard.timeout.connect(lambda: (anim.stop(), done_fn()))
+        guard.timeout.connect(lambda: (
+            anim.stop(),
+            done_fn() if not self._anim_cancelled else None
+        ))
         guard.start(max_ms)
 
     def _animate_move(self, target: QPoint, duration_ms: int) -> None:
@@ -421,6 +426,7 @@ class PetWindow(QWidget):
     def trigger_random_interaction(self) -> None:
         if self._is_animating:
             return
+        self._anim_cancelled = False
             
         # 尝试播放序列帧动画
         if self._play_random_sprite_anim("click"):
@@ -442,6 +448,7 @@ class PetWindow(QWidget):
     def _trigger_special_interaction(self) -> None:
         if self._is_animating:
             return
+        self._anim_cancelled = False
             
         if self._play_random_sprite_anim("double_click"):
             self.bubble.show_bubble(get_phrase("double_click", self._get_skin_dir()), self.pos())
