@@ -1,5 +1,28 @@
 # 更新日志
 
+## v1.0.7（2026-08-01）
+
+### 修复
+- **单击 / 双击完全失效**：`mousePressEvent` 无条件设 `_is_dragging=True`，导致点击永远被当成拖拽，单双击检测代码从未执行
+- **重启后宠物不在上次位置**：`_restore_position` 调了 `_clamp_to_screen` 但丢弃返回值，未实际调用 `move()`
+- **气泡文字显示不全**：宽度 200→240，高度 52→56，增加屏幕边界裁剪防止气泡超出屏幕
+- **音效模块崩溃**：`QtMultimedia` 不可用时静默降级，不再导致程序崩溃
+
+---
+
+## v1.0.6（2026-08-01）
+
+### 修复
+- CI release 任务移除不必要的 git checkout（省 ~10s + 50MB 传输）
+- `build_exe.py` `cmd.insert(-1, ...)` 改为 `cmd.append("run.py")` 避免脆弱的索引依赖
+- `build_exe.py` 添加 `try/except` 错误处理
+- 移除未使用的 `import shutil`
+
+### 新增
+- CI 添加 pip 缓存，加速重复构建
+
+---
+
 ## v1.0.5（2026-08-01）
 
 ### 修复
