@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QIcon, QPen
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPoint
 
 from desktop_pet.config_manager import ConfigManager
 from desktop_pet.pet_window import PetWindow
