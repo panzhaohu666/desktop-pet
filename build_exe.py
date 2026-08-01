@@ -58,7 +58,6 @@ def build() -> None:
 
     size_mb = os.path.getsize(zip_path) / 1024 / 1024
     print(f"Done: {zip_path} ({size_mb:.1f} MB)")
-    print("Windows 用户解压后运行 DesktopPet.exe 即可，不会再被误报病毒")
 
 
 if __name__ == "__main__":
