@@ -7,15 +7,15 @@ import zipfile
 
 def build() -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)
 
     is_win = sys.platform == "win32"
     separator = ";" if is_win else ":"
 
-    resources_src = os.path.join(current_dir, "resources")
+    pkg_dir = os.path.join(current_dir, "desktop_pet")
+    resources_src = os.path.join(pkg_dir, "resources")
     resources_arg = f"{resources_src}{separator}resources"
 
-    skins_src = os.path.join(current_dir, "skins")
+    skins_src = os.path.join(pkg_dir, "skins")
     skins_arg = ""
     if os.path.isdir(skins_src):
         skins_arg = f"{skins_src}{separator}skins"
@@ -27,17 +27,16 @@ def build() -> None:
         "--noconsole",
         "--onedir",
         f"--name={binary_name}",
-        f"--paths={parent_dir}",
+        f"--paths={current_dir}",
         f"--add-data={resources_arg}",
         "run.py",
     ]
     if skins_arg:
         cmd.insert(-1, f"--add-data={skins_arg}")
 
-    print(f"Building with --onedir (anti-false-positive)...")
+    print("Building with --onedir ...")
     subprocess.check_call(cmd, cwd=current_dir)
 
-    # Zip the directory
     dist_dir = os.path.join(current_dir, "dist")
     src_dir = os.path.join(dist_dir, binary_name)
 
