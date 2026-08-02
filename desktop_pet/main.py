@@ -97,8 +97,10 @@ def ensure_pet_image() -> str:
 
 
 def _scan_skins() -> dict:
-    """扫描 skins/ 目录，返回 {名称: pet.png路径} 的字典。"""
-    base = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, 'frozen', False):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
     skins_dir = os.path.join(base, "skins")
     result = {}
     if not os.path.isdir(skins_dir):

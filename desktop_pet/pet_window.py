@@ -273,9 +273,9 @@ class PetWindow(QWidget):
             QMenu {
                 background-color: white; border: 1px solid #d0d0d0;
                 border-radius: 6px; padding: 4px;
-                font-size: 12px;
+                font-size: 12px; min-width: 140px;
             }
-            QMenu::item { padding: 6px 24px 6px 12px; border-radius: 4px; }
+            QMenu::item { padding: 6px 36px 6px 14px; border-radius: 4px; }
             QMenu::item:selected { background-color: #4a90e2; color: white; }
         """)
 
