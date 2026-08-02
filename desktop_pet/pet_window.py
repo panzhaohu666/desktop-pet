@@ -59,6 +59,7 @@ class PetWindow(QWidget):
         self._init_timers()
 
         self.bubble = BubbleWidget(None)
+        self.bubble.load_skin_colors(self._get_skin_dir())
 
         self._restore_position()
         self._start_auto_wander()
@@ -319,6 +320,7 @@ class PetWindow(QWidget):
             self.original_pixmap = QPixmap(resolved)
             self._update_image_size()
             self.config_mgr.set("appearance/skin", skin_name)
+            self.bubble.load_skin_colors(self._get_skin_dir())
             self._show_bubble(f"已切换皮肤: {skin_name}", self.pos())
 
     def _get_skin_dir(self) -> str:
@@ -347,6 +349,7 @@ class PetWindow(QWidget):
         new_skin = self.config_mgr.get("appearance/skin", "")
         if new_skin != self._skin_key:
             self._switch_skin(new_skin)
+        self.bubble.load_skin_colors(self._get_skin_dir())
 
         chat_secs = int(self.config_mgr.get("behavior/chat_interval", 20))
         self.idle_chat_timer.setInterval(chat_secs * 1000)

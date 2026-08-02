@@ -1,4 +1,6 @@
 from typing import Optional
+import json
+import os
 
 from PyQt5.QtCore import (
     Qt, QTimer, QPoint, QRectF, QPropertyAnimation, pyqtProperty,
@@ -59,6 +61,10 @@ class BubbleWidget(QWidget):
         self._bg: QColor = WHITE_BG
         self._border: QColor = WHITE_BORDER
         self._text_color: QColor = WHITE_TEXT
+        self._skin_bg: QColor = WHITE_BG
+        self._skin_border: QColor = WHITE_BORDER
+        self._skin_text: QColor = WHITE_TEXT
+        self._has_skin_colors: bool = False
         self._body_height: int = MIN_BUBBLE_BODY_HEIGHT
         self._font = QFont()
         self._font.setPixelSize(FONT_SIZE)
@@ -95,12 +101,29 @@ class BubbleWidget(QWidget):
 
     opacity = pyqtProperty(float, _get_opacity, _set_opacity)
 
+    def load_skin_colors(self, skin_dir: str) -> None:
+        """从皮肤目录加载气泡配色，无则保持默认。"""
+        if not skin_dir:
+            return
+        path = os.path.join(skin_dir, "bubble_colors.json")
+        if not os.path.exists(path):
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self._skin_bg = QColor(data.get("bg", "#FFFFFF"))
+            self._skin_border = QColor(data.get("border", "#B4B4B4"))
+            self._skin_text = QColor(data.get("text", "#3C3C3C"))
+            self._has_skin_colors = True
+        except (json.JSONDecodeError, OSError, KeyError):
+            self._has_skin_colors = False
+
     def _choose_colors(self, text: str) -> None:
-        excited_keywords = ["！", "哇", "耶", "超", "好厉害", "开心", "热情"]
-        if any(kw in text for kw in excited_keywords):
-            self._bg, self._border, self._text_color = PINK_BG, PINK_BORDER, PINK_TEXT
-        else:
-            self._bg, self._border, self._text_color = WHITE_BG, WHITE_BORDER, WHITE_TEXT
+        if self._has_skin_colors:
+            self._bg = self._skin_bg
+            self._border = self._skin_border
+            self._text_color = self._skin_text
+            return
 
     def show_bubble(self, text: str, target_pos: QPoint) -> None:
         self._text = text
