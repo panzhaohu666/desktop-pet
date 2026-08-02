@@ -70,7 +70,7 @@ def get_random_phrase(skin_dir: str = "") -> str:
         phrases = _load_skin_phrases(skin_dir)
         if phrases:
             return random.choice(phrases)
-    return ""  # 无皮肤专属短语时不说话
+    return random.choice(GENERAL)
 
 
 def get_phrase(category: str, skin_dir: str = "") -> str:
@@ -78,4 +78,5 @@ def get_phrase(category: str, skin_dir: str = "") -> str:
         phrases = _load_skin_phrases(skin_dir)
         if phrases:
             return random.choice(phrases)
-    return ""  # 无皮肤专属短语时不说话
+    pool = CATEGORY_MAP.get(category, GENERAL)
+    return random.choice(pool)
