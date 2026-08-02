@@ -272,7 +272,7 @@ class PetWindow(QWidget):
             QMenu {
                 background-color: white; border: 1px solid #d0d0d0;
                 border-radius: 6px; padding: 4px;
-                font-family: 'Microsoft YaHei'; font-size: 12px;
+                font-size: 12px;
             }
             QMenu::item { padding: 6px 24px 6px 12px; border-radius: 4px; }
             QMenu::item:selected { background-color: #4a90e2; color: white; }
@@ -313,7 +313,7 @@ class PetWindow(QWidget):
     def _switch_skin(self, skin_name: str) -> None:
         if skin_name == self._skin_key:
             return
-        resolved = self._skins.get(skin_name)
+        resolved = os.path.abspath(self._skins.get(skin_name, ""))
         if resolved and os.path.exists(resolved):
             self._skin_key = skin_name
             self.original_pixmap = QPixmap(resolved)
@@ -322,10 +322,9 @@ class PetWindow(QWidget):
             self._show_bubble(f"已切换皮肤: {skin_name}", self.pos())
 
     def _get_skin_dir(self) -> str:
-        """获取当前皮肤所在的文件夹路径"""
-        resolved = self._skins.get(self._skin_key)
+        resolved = self._skins.get(self._skin_key, "")
         if resolved and os.path.exists(resolved):
-            return os.path.dirname(resolved)
+            return os.path.dirname(os.path.abspath(resolved))
         return ""
 
     def _open_settings(self) -> None:

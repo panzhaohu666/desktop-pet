@@ -20,9 +20,9 @@ class SettingsDialog(QDialog):
                  skins: Optional[list] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("桌宠精灵 — 设置")
-        self.setMinimumWidth(420)
+        self.resize(460, 380)
         self.setStyleSheet("""
-            QDialog { background: #f5f5f5; font-family: 'Microsoft YaHei'; }
+            QDialog { background: #f5f5f5; }
             QGroupBox { font-weight: bold; border: 1px solid #ddd; border-radius: 6px; margin-top: 8px; padding-top: 12px; }
             QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; }
         """)
@@ -104,8 +104,9 @@ class SettingsDialog(QDialog):
     def _update_skin_preview(self) -> None:
         skin = self._skin_combo.currentData()
         import os
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "skins", skin, "pet.png")
+        path = os.path.abspath(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "skins", skin, "pet.png"))
         if os.path.exists(path):
             pix = QPixmap(path).scaled(56, 56, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         else:

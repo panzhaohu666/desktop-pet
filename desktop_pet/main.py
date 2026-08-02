@@ -107,7 +107,7 @@ def _scan_skins() -> dict:
         skin_dir = os.path.join(skins_dir, entry)
         pet_file = os.path.join(skin_dir, "pet.png")
         if os.path.isdir(skin_dir) and os.path.isfile(pet_file):
-            result[entry] = pet_file
+            result[entry] = os.path.abspath(pet_file)
     return result
 
 

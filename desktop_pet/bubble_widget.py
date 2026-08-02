@@ -60,7 +60,8 @@ class BubbleWidget(QWidget):
         self._border: QColor = WHITE_BORDER
         self._text_color: QColor = WHITE_TEXT
         self._body_height: int = MIN_BUBBLE_BODY_HEIGHT
-        self._font = QFont("Microsoft YaHei", FONT_SIZE)
+        self._font = QFont()
+        self._font.setPixelSize(FONT_SIZE)
         self._font.setStyleHint(QFont.SansSerif)
 
         self.setAttribute(Qt.WA_TranslucentBackground, True)
