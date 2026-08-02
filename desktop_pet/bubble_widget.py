@@ -35,15 +35,12 @@ def _measure_text_height(text: str, width: int, font: QFont) -> int:
     fm = QFontMetrics(font)
     text_width = width - 2 * PADDING_H
 
-    # 逐字符测量，模拟换行
     lines = 1
     line_w = 0
-    max_line_advance = 0
     for ch in text:
-        char_w = fm.horizontalAdvance(ch)
+        char_w = fm.width(ch)
         if line_w + char_w > text_width and line_w > 0:
             lines += 1
-            max_line_advance = max(max_line_advance, line_w)
             line_w = char_w
         else:
             line_w += char_w
