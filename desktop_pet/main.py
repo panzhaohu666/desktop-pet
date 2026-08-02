@@ -111,14 +111,29 @@ def _scan_skins() -> dict:
     return result
 
 
-def main() -> None:
-    import fcntl
+def _acquire_lock() -> bool:
+    """跨平台单实例锁。成功返回True，已有实例返回False。"""
     lock_file = os.path.join(ConfigManager.config_dir(), "desktop_pet.lock")
     os.makedirs(os.path.dirname(lock_file), exist_ok=True)
     try:
-        lock_fd = open(lock_file, "w")
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except (IOError, OSError):
+        if os.path.exists(lock_file):
+            with open(lock_file, "r") as f:
+                old_pid = f.read().strip()
+            if old_pid:
+                try:
+                    os.kill(int(old_pid), 0)
+                    return False  # 进程还在
+                except (OSError, ValueError):
+                    pass  # 进程已死
+        with open(lock_file, "w") as f:
+            f.write(str(os.getpid()))
+        return True
+    except Exception:
+        return True  # 出错时允许启动
+
+
+def main() -> None:
+    if not _acquire_lock():
         print("桌宠精灵已在运行中")
         sys.exit(0)
 
